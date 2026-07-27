@@ -2,19 +2,90 @@
 use crate::printer_api::*;
 use crate::models::{PrinterStatus}; 
 use std::time::Duration;
+use tauri::AppHandle;
+use tauri::Emitter;
 
-
-
-async fn fetch_printer_status(ip: &str, api_key: &str) -> Result<PrinterStatus, String> {
-    fetch_status(ip, api_key).await
+enum SmState{
+    Connect,
+    Info,
+    Files,
+    Idle,
+    Status,
+    // UploadFile,
+    // DeleteFile,
+    // NewJob,
+    // SendPrintJob,
+    // StopPrintJob,
+    // PausePrintJob,
+    // ResumePrintJob
 }
 
+const PRINTER_IP:&str = "192.168.1.76";
+const APIKEY:&str = "kpiTr8FC6WmrsJh";
 
-pub fn start_background_thread() {
-    tauri::async_runtime::spawn(async {
+pub fn start_background_thread(app: tauri::AppHandle) {
+    tauri::async_runtime::spawn(async move {
+
+        let mut state = SmState::Connect;
+
         loop {
-             let printer_status  =  fetch_printer_status("192.168.1.76", "kpiTr8FC6WmrsJh").await.map_err(|e| e.to_string());
-            println!("Printer Status: {:?}", printer_status);
+
+            state  = match state {
+                SmState::Connect => {
+                    println!("Connecting to printer...");
+                    let printer_version  =  fetch_version(PRINTER_IP, APIKEY).await.map_err(|e| e.to_string());
+                    if printer_version.is_err() {
+                        println!("Error fetching printer version: {:?}", printer_version.err());
+                        // Handle the error, maybe retry or transition to an error state
+                        SmState::Connect // Retry connecting
+                    } else {
+                        println!("Printer Version: {:?}", printer_version);
+                        SmState::Info // Transition to Info state on success
+                    }
+                }
+                SmState::Info => {
+                    println!("Fetching printer info...");
+                    let printer_info = fetch_info(PRINTER_IP, APIKEY).await.map_err(|e| e.to_string());
+                    if printer_info.is_err() {
+                        println!("Error fetching printer info: {:?}", printer_info.err());
+                        // Handle the error, maybe retry or transition to an error state
+                        SmState::Connect // Retry connecting
+                    } else {
+                        println!("Printer Info: {:?}", printer_info);
+                        SmState::Status // Transition to Status state on success
+                    }
+                }
+                SmState::Files => {
+                    println!("Fetching files...");
+                    // Fetch files here
+                    // Transition to the Idle state
+                    SmState::Idle
+                }
+                SmState::Idle => {
+                    println!("Printer is idle.");
+                    // Wait for a command or event to change state
+                    SmState::Status
+                }
+                SmState::Status => {
+                    println!("Fetching printer status...");
+                    let printer_status = fetch_status(PRINTER_IP, APIKEY).await.map_err(|e| e.to_string());
+
+                                
+                    //app.emit("printer-status-update", &printer_status).unwrap();
+
+                    if printer_status.is_err() {
+                        println!("Error fetching printer status: {:?}", printer_status.err());
+                        // Handle the error, maybe retry or transition to an error state
+                        SmState::Connect // Retry connecting
+                    } else {
+                        let status = printer_status.unwrap();
+                        app.emit("printer-status-update", &status).unwrap();
+                        SmState::Status // Transition to Status state on success
+                    }
+                    
+                }
+
+            };
 
             tokio::time::sleep(Duration::from_secs(1)).await;
         }

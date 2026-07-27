@@ -29,9 +29,13 @@ async fn greet2(name: &str) -> Result<String, String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
 
-    printer::start_background_thread();   
+      
 
     tauri::Builder::default()
+        .setup(|app|{
+            printer::start_background_thread(app.handle().clone()); 
+            Ok(())
+        })
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![greet,greet2])
         .run(tauri::generate_context!())

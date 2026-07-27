@@ -2,12 +2,12 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PrinterStatus {
-    pub printer: Option<PrinterInfo>,
+    pub printer: Option<PrinterTelemetry>,
     pub job: Option<JobInfo>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PrinterInfo {
+pub struct PrinterTelemetry {
     pub state: Option<String>,
     pub temp_bed: Option<f64>,
     pub temp_nozzle: Option<f64>,
@@ -35,7 +35,6 @@ pub struct CapInfo{
 
 
 #[derive(Debug, Serialize, Deserialize)]
-
 pub struct VersionInfo {
     pub api: Option<String>,
     pub server: Option<String>,
@@ -45,4 +44,14 @@ pub struct VersionInfo {
     pub firmware: Option<String>,
     pub printer: Option<String>,
     pub capabilities: Option<CapInfo>,
+}
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PrinterInfo {
+    pub nozzle_diameter: Option<f64>,
+    pub mmu: Option<bool>,
+    pub serial: Option<String>,
+    pub hostname: Option<String>,
+    pub min_extrution_temp: Option<i64>,
 }
