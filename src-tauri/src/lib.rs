@@ -1,16 +1,30 @@
 // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-
-
+mod printer;
+mod printer_api;
 
 #[tauri::command]
-fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
+fn greet(name: &str) -> Result<String, String> {
+
+    printer::print_document(name);
+
+    if name == "error" {
+        return Err("Error: Invalid name provided".to_string());             
+    }else{   
+        Ok(format!("Hello, {}! You've been greeted from Rust!", name))
+    }
 }
 
 
 #[tauri::command]
-fn greet2(name: &str) -> String {
-    format!("Hello2, {}! You've been greeted from Rust!", name)
+fn greet2(name: &str) -> Result<String, String> {
+
+    printer::print_document(name);
+
+    if name == "error" {
+        return Err("Error: Invalid name provided".to_string());             
+    }else{   
+        Ok(format!("Hello, {}! You've been greeted from Rust2!", name))
+    }
 }
 
 
