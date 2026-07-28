@@ -55,3 +55,44 @@ pub struct PrinterInfo {
     pub hostname: Option<String>,
     pub min_extrution_temp: Option<i64>,
 }
+
+
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileList {
+    #[serde(rename = "children")]
+    pub children: Option<Vec<FileItem>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileItem {
+    #[serde(rename = "name")]
+    pub name: Option<String>,
+
+    #[serde(rename = "display_name")]
+    pub display_name: Option<String>,
+
+    #[serde(rename = "type")]
+    pub file_type: Option<String>,
+
+    #[serde(rename = "m_timestamp")]
+    pub last_modified_timestamp: i64,
+
+    #[serde(rename = "refs")]
+    pub refs: Option<FileRefs>,
+
+    //#[serde(rename = "thumbnail_image")]
+   // pub thumbnail_image: Option<Image>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FileRefs {
+    #[serde(rename = "icon")]
+    pub icon: Option<String>,
+
+    #[serde(rename = "thumbnail")]
+    pub thumbnail: Option<String>,
+
+    #[serde(rename = "download")]
+    pub download: Option<String>,
+}

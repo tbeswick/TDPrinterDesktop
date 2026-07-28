@@ -1,8 +1,15 @@
 
 
 
+use std::time::Duration;
+
 use reqwest::Client;
-use crate::models::{PrinterStatus,VersionInfo, PrinterInfo};
+use crate::models::{PrinterStatus,VersionInfo, PrinterInfo, FileList};
+
+
+const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
+const LONG_CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
+
 
 pub async fn fetch_status(ip: &str, api_key: &str) -> Result<PrinterStatus, String> {
     let url = format!("http://{}/api/v1/status", ip);
@@ -11,7 +18,8 @@ pub async fn fetch_status(ip: &str, api_key: &str) -> Result<PrinterStatus, Stri
 
     let res = client
         .get(&url)
-        .header("X-Api-Key", api_key)
+        .header("X-Api-Key", api_key)      
+        .timeout(CONNECT_TIMEOUT)
         .send()
         .await
         .map_err(|e| e.to_string())?;
@@ -37,6 +45,7 @@ pub async fn fetch_version(ip: &str, api_key: &str) -> Result<VersionInfo, Strin
     let res = client
         .get(&url)
         .header("X-Api-Key", api_key)
+        .timeout(CONNECT_TIMEOUT)           
         .send()
         .await
         .map_err(|e| e.to_string())?;
@@ -62,6 +71,7 @@ pub async fn fetch_info(ip: &str, api_key: &str) -> Result<PrinterInfo, String> 
     let res = client
         .get(&url)
         .header("X-Api-Key", api_key)
+        .timeout(CONNECT_TIMEOUT)
         .send()
         .await
         .map_err(|e| e.to_string())?;
@@ -79,3 +89,28 @@ pub async fn fetch_info(ip: &str, api_key: &str) -> Result<PrinterInfo, String> 
     Ok(json)
 }
 
+pub async fn fetch_file_info(ip: &str, api_key: &str) -> Result<FileList, String> {
+    let url = format!("http://{}/api/v1/files/usb", ip);
+
+    let client = Client::new();
+
+    let res = client
+        .get(&url)
+        .header("X-Api-Key", api_key)
+        .timeout(LONG_CONNECT_TIMEOUT)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !res.status().is_success() {
+        println!("HTTP error: {}", res.status());
+        return Err(format!("HTTP error: {}", res.status()));
+    }
+
+    let json = res
+        .json::<FileList>()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(json)
+}

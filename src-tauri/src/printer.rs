@@ -52,14 +52,36 @@ pub fn start_background_thread(app: tauri::AppHandle) {
                         SmState::Connect // Retry connecting
                     } else {
                         println!("Printer Info: {:?}", printer_info);
-                        SmState::Status // Transition to Status state on success
+                        SmState::Files // Transition to Status state on success
                     }
                 }
                 SmState::Files => {
                     println!("Fetching files...");
-                    // Fetch files here
-                    // Transition to the Idle state
-                    SmState::Idle
+                    let file_list = fetch_file_info(PRINTER_IP, APIKEY).await.map_err(|e| e.to_string());
+                    if file_list.is_err() {
+                        println!("Error fetching file list: {:?}", file_list.err());
+                        // Handle the error, maybe retry or transition to an error state
+                        SmState::Connect // Retry connecting
+                    } else {
+                        let mut file_list = file_list.unwrap();                        
+                        println!("File List: {:?}", file_list);
+                        if let Some(children) = &mut file_list.children {
+                            children.sort_by(|a, b| {
+                                a.display_name
+                                    .as_deref()
+                                    .unwrap_or("")                                  
+                                    .cmp(&b.display_name.as_deref().unwrap_or("").to_ascii_lowercase())                                
+                            });
+
+                            for child in children {
+                                if child.file_type.as_deref() == Some("PRINT_FILE") {
+                                    println!("Found G-code file: {:?}", child.display_name);
+                                }
+                            }
+                        }
+
+                        SmState::Status // Transition to Status state on success
+                    }                    
                 }
                 SmState::Idle => {
                     println!("Printer is idle.");
@@ -68,11 +90,7 @@ pub fn start_background_thread(app: tauri::AppHandle) {
                 }
                 SmState::Status => {
                     println!("Fetching printer status...");
-                    let printer_status = fetch_status(PRINTER_IP, APIKEY).await.map_err(|e| e.to_string());
-
-                                
-                    //app.emit("printer-status-update", &printer_status).unwrap();
-
+                    let printer_status = fetch_status(PRINTER_IP, APIKEY).await.map_err(|e| e.to_string());                            
                     if printer_status.is_err() {
                         println!("Error fetching printer status: {:?}", printer_status.err());
                         // Handle the error, maybe retry or transition to an error state
