@@ -82,7 +82,7 @@ pub struct FileItem {
     pub refs: Option<FileRefs>,
 
     //#[serde(rename = "thumbnail_image")]
-   // pub thumbnail_image: Option<Image>,
+    pub thumbnail_image: Option<Vec<u8>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

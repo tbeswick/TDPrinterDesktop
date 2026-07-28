@@ -1,9 +1,10 @@
 
 use crate::printer_api::*;
-use crate::models::{PrinterStatus}; 
+use crate::models::{PrinterStatus,FileList,FileItem}; 
 use std::time::Duration;
-use tauri::AppHandle;
+use std::thread;
 use tauri::Emitter;
+use std::sync::{Mutex, OnceLock};
 
 enum SmState{
     Connect,
@@ -22,6 +23,54 @@ enum SmState{
 
 const PRINTER_IP:&str = "192.168.1.76";
 const APIKEY:&str = "kpiTr8FC6WmrsJh";
+
+static FILE_LIST: OnceLock<Mutex<FileList>> = OnceLock::new();
+
+
+fn sort_files() {
+    if let Some(file_list) = FILE_LIST.get() {
+        let mut file_list = file_list.lock().unwrap();
+
+        if let Some(children) = &mut file_list.children {
+            children.sort_by_key(|item| {
+                item.display_name
+                    .as_deref()
+                    .unwrap_or("")
+                    .to_ascii_lowercase()
+            });
+        }
+    }
+}
+
+
+ fn print_files(file_list: &FileList) {
+    if let Some(children) = &file_list.children {
+        for child in children {
+            if child.file_type.as_deref() == Some("FOLDER") {
+                println!("Folder: {:?}", child.display_name);
+            } else {
+                println!("File: {:?}", child.display_name);
+            }
+            println!("{:?}", child.display_name);
+        }
+    }
+}
+
+
+async fn process_file(child: FileItem) {
+    println!("Processing {:?}", child.display_name);
+
+    if let Some(image) = fetch_file_image(
+        PRINTER_IP,
+        APIKEY,
+        &child.name.as_deref().unwrap_or(""),
+    )
+    .await
+    {
+        println!("Downloaded {} bytes", image.len());
+    }
+}
+
 
 pub fn start_background_thread(app: tauri::AppHandle) {
     tauri::async_runtime::spawn(async move {
@@ -63,22 +112,28 @@ pub fn start_background_thread(app: tauri::AppHandle) {
                         // Handle the error, maybe retry or transition to an error state
                         SmState::Connect // Retry connecting
                     } else {
-                        let mut file_list = file_list.unwrap();                        
-                        println!("File List: {:?}", file_list);
-                        if let Some(children) = &mut file_list.children {
-                            children.sort_by(|a, b| {
-                                a.display_name
-                                    .as_deref()
-                                    .unwrap_or("")                                  
-                                    .cmp(&b.display_name.as_deref().unwrap_or("").to_ascii_lowercase())                                
-                            });
+                        let file_list = file_list.unwrap();     
 
-                            for child in children {
-                                if child.file_type.as_deref() == Some("PRINT_FILE") {
-                                    println!("Found G-code file: {:?}", child.display_name);
+                        
+                              
+                        // FILE_LIST
+                        //     .set(Mutex::new(file_list))
+                        //     .unwrap();          
+                        //     // Sort the files after fetching              
+                        //     sort_files();
+
+                        // print the sorted files to the console
+                        // if let Some(file_list) = FILE_LIST.get() {
+                        //     let file_list = file_list.lock().unwrap();                            
+                             print_files(&file_list);                            
+                        
+
+                            if let Some(children) = file_list.children {
+                                for child in children {
+                                    process_file(child).await;
                                 }
-                            }
-                        }
+                            }            
+                       // }            
 
                         SmState::Status // Transition to Status state on success
                     }                    

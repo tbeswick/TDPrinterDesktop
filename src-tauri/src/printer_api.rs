@@ -114,3 +114,41 @@ pub async fn fetch_file_info(ip: &str, api_key: &str) -> Result<FileList, String
 
     Ok(json)
 }
+
+
+pub async fn fetch_file_image(
+    ip: &str,
+    api_key: &str,
+    image_name: &str) -> Option<Vec<u8>> {
+        
+    let url = format!("http://{}/thumb/l/usb/{}", ip, image_name);
+
+    println!("Fetching image from URL: {}", url);
+
+    let client = Client::new();
+
+
+    match client
+        .get(url)
+        .header("X-Api-Key", api_key)
+        .send()
+        .await
+    {
+        Ok(response) => {
+            if response.status().is_success() {
+                match response.bytes().await {
+                    Ok(bytes) => Some(bytes.to_vec()),
+                    Err(_) => None,
+                }
+            } else {
+                println!("HTTP error: {}", response.status());                
+                None
+
+            }
+        }
+        Err(_) => None,
+    }
+
+
+
+}
