@@ -3,6 +3,7 @@ import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import "./App.css";
+import { FileItem, FileList } from "./types";
 
 
 interface PrinterStatus  {
@@ -23,12 +24,6 @@ function App() {
   const [greetMsg, setGreetMsg] = useState("");
   const [greet2Msg, setGreet2Msg] = useState("");
   const [name, setName] = useState("");
-
-
-      // await listen("printer-status", (event) => {
-      //     console.log(event.payload);
-      // });  
-
 
 
   async function greet() {
@@ -53,6 +48,7 @@ function App() {
 
 
  const [status, setStatus] = useState<PrinterStatus | null>(null);
+ const [files, setFiles] = useState<FileItem[]>([]); 
 
 
   useEffect(() => {
@@ -71,6 +67,35 @@ function App() {
       }
     };
   }, []);
+
+    useEffect(() => {
+
+        let unlisten: (() => void) | undefined;
+
+        async function setupListener() {
+
+            unlisten = await listen("file-list-updated", async () => {
+
+                console.log("File list changed");
+
+                const updatedFiles = await invoke<FileList | null>("get_file_list");
+                 console.log("Updated file list:", updatedFiles);
+                setFiles(updatedFiles!.children ?? []);
+            });
+        }
+
+        setupListener();
+
+        return () => {
+            if (unlisten) {
+                unlisten();
+            }
+        };
+
+    }, []);
+
+
+
 
 
   // async function get_api_status(ip: string, api_key: string) {
@@ -102,6 +127,16 @@ function App() {
       ) : (
         <p>Waiting for printer...</p>
       )}
+
+
+        <div>
+            {files.map(file => (
+                <div key={file.display_name}>
+                    {file.display_name}
+                </div>
+            ))}
+        </div>
+
 
 
       <div className="row">

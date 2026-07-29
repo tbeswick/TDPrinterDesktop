@@ -61,8 +61,10 @@ pub struct PrinterInfo {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileList {
     #[serde(rename = "children")]
-    pub children: Option<Vec<FileItem>>,
+    pub children: Option<Vec<FileItem>>,    
 }
+
+
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileItem {
