@@ -3,7 +3,10 @@ import reactLogo from "./assets/react.svg";
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import "./App.css";
-import { FileItem, FileList, PrinterStatus } from "./types";
+import { FileItem, FileList } from "./types/printerfile";
+import { PrinterStatus } from "./types/printerstatus";
+import { VersionInfo } from "./types/versioninfo";
+import { usePrinterEvents } from "./hooks/usePrinterEvents";
 
 
 
@@ -15,63 +18,22 @@ function App() {
 
  const [status, setStatus] = useState<PrinterStatus | null>(null);
  const [files, setFiles] = useState<FileItem[]>([]); 
+ const [version, setVersion] = useState<VersionInfo | null>(null);
 
 
-  useEffect(() => {
-    let unlisten: (() => void) | undefined;
-
-    listen<PrinterStatus>("printer-status-update", (event) => {
-      console.log("Received printer status update:", event.payload.printer);
-      setStatus(event.payload || null);
-    }).then((fn) => {
-      unlisten = fn;
-    });
-
-    return () => {
-      if (unlisten) {
-        unlisten();
-      }
-    };
-  }, []);
-
-    useEffect(() => {
-
-        let unlisten: (() => void) | undefined;
-
-        async function setupListener() {
-
-            unlisten = await listen("file-list-updated", async () => {
-
-                console.log("File list changed");
-
-                const updatedFiles = await invoke<FileList | null>("get_file_list");
-                 console.log("Updated file list:", updatedFiles);
-                setFiles(updatedFiles!.children ?? []);
-            });
-        }
-
-        setupListener();
-
-        return () => {
-            if (unlisten) {
-                unlisten();
-            }
-        };
-
-    }, []);
-
+    usePrinterEvents(
+        setStatus,
+        setFiles,
+        setVersion  
+    );
 
 
   return (
 
-    
-
-
-
     <main className="container">
       <h1>Welcome to Tauri + React</h1>
 
- {status ? (
+      {status ? (
         <div>
           <p>Connected: {status.printer.connected ? "Yes" : "No"}</p>
           <p>State: {status.printer.state}</p>
@@ -83,6 +45,18 @@ function App() {
         <p>Waiting for printer...</p>
       )}
 
+      {version ? (
+        <div>
+          <p>API Version: {version.api}</p>
+          <p>Server Version: {version.server}</p>
+          <p>Nozzle Diameter: {version.nozzle_diameter}</p>
+          <p>Hostname: {version.hostname}</p>
+          <p>Firmware: {version.firmware}</p>
+          <p>Printer: {version.printer}</p>
+        </div>
+      ) : (
+        <p>Waiting for printer version...</p>
+      )}
 
         <div>
             {files.map(file => (

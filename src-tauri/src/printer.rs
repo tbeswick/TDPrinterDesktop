@@ -76,7 +76,9 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                         // Handle the error, maybe retry or transition to an error state
                         SmState::Connect // Retry connecting
                     } else {
-                        println!("Printer Version: {:?}", printer_version);
+                        let version = printer_version.unwrap();
+                        println!("Printer Version: {:?}", version);                        
+                        app.emit("printer-version-updated", &version).unwrap();
                         SmState::Info // Transition to Info state on success
                     }
                 }
@@ -125,7 +127,7 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                         SmState::Connect // Retry connecting
                     } else {
                         let status = printer_status.unwrap();
-                        app.emit("printer-status-update", &status).unwrap();
+                        app.emit("printer-status-updated", &status).unwrap();
                         SmState::Status // Transition to Status state on success
                     }
                     
