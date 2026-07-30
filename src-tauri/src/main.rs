@@ -4,5 +4,5 @@
 
 
 fn main() { 
-    hello_tauri_lib::run()
+    tdp_desktop_lib::run()
 }
