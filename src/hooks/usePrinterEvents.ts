@@ -20,8 +20,6 @@ export function usePrinterEvents(
 
             unlisten = await listen("file-list-updated", async () => {
 
-                console.log("File list changed");
-
                 const updatedFiles = await invoke<FileList | null>("get_file_list");
                  console.log("Updated file list:", updatedFiles!.children);
                 setFiles(updatedFiles!.children ?? []);
@@ -41,6 +39,7 @@ export function usePrinterEvents(
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
+
 
     listen<VersionInfo>("printer-version-updated", (event) => {
       console.log("Received printer version update:", event.payload);

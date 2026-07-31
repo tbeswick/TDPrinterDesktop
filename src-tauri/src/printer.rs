@@ -1,6 +1,6 @@
 
 use crate::{AppState, printer_api::*};
-use crate::models::{PrinterStatus,FileList,FileItem}; 
+use crate::models::{PrinterStatus,FileList,FileItem,VersionInfo}; 
 use std::time::Duration;
 use std::thread;
 use tauri::Emitter;
@@ -65,6 +65,10 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
 
         let mut state = SmState::Connect;
 
+        // settle delay - allows first version event to fire correctly
+        tokio::time::sleep(Duration::from_secs(2)).await;        
+
+
         loop {
 
             state  = match state {
@@ -77,7 +81,7 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                         SmState::Connect // Retry connecting
                     } else {
                         let version = printer_version.unwrap();
-                        println!("Printer Version: {:?}", version);                        
+                        println!("Printer Version: {:?}", &version);                        
                         app.emit("printer-version-updated", &version).unwrap();
                         SmState::Info // Transition to Info state on success
                     }
@@ -116,10 +120,10 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                 SmState::Idle => {
                     println!("Printer is idle.");
                     // Wait for a command or event to change state
-                    SmState::Status
+                    SmState::Idle
                 }
                 SmState::Status => {
-                    println!("Fetching printer status...");
+                 //   println!("Fetching printer status...");
                     let printer_status = fetch_status(PRINTER_IP, APIKEY).await.map_err(|e| e.to_string());                            
                     if printer_status.is_err() {
                         println!("Error fetching printer status: {:?}", printer_status.err());

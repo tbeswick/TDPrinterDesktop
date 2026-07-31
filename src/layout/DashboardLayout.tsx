@@ -1,4 +1,3 @@
-import Topbar from "./Topbar";
 import { ReactNode, useState } from "react";
 import { PrinterStatus } from "../types/printerstatus";
 import { VersionInfo } from "../types/versioninfo";
@@ -6,9 +5,6 @@ import { usePrinterEvents } from "../hooks/usePrinterEvents";
 import { FileItem } from "../types/printerfile";
 import "./layout.css";
 import logo from "../assets/react.svg";
-
-
-//({file.name}) - Type: {file.type} - Last Modified: {new Date(file.m_timestamp * 1000).toLocaleString()}
 
 
 export default function DashboardLayout({
@@ -31,7 +27,28 @@ export default function DashboardLayout({
 
   return (
     <div className="app-shell">
-      <Topbar />
+      <header className="topbar">
+
+        {version ? (
+         <div style={{fontSize:"12px"}}>
+           <p>API Version: {version.api}</p>
+           <p>Server Version: {version.server}</p>
+           <p>Nozzle Diameter: {version.nozzle_diameter}</p>
+           <p>Hostname: {version.hostname}</p>
+           <p>Firmware: {version.firmware}</p>
+           <p>Printer: {version.printer}</p>
+         </div>
+        ): (
+          <p style={{fontSize:"12px"}}>Waiting for version...</p>
+        )}
+
+
+        <div style={{ flex: 1 }}>TDPrinter Desktop</div>
+
+        <div style={{fontSize:"16px"}}>
+          Status: <b>{version ? (<p>connected</p>):(<p>none</p>)  }</b>
+        </div>
+      </header>
 
       <div className="app-body">
         <aside className="sidebar">
@@ -54,7 +71,6 @@ export default function DashboardLayout({
 
        {status ? (
          <div>
-           <p>Connected: {status.printer.connected ? "Yes" : "No"}</p>
            <p>State: {status.printer.state}</p>
            <p>Nozzle: {status.printer.temp_nozzle} °C</p>
            <p>Bed: {status.printer.bed_temp} °C</p>
@@ -64,18 +80,8 @@ export default function DashboardLayout({
          <p>Waiting for printer...</p>
        )}
 
-       {version ? (
-         <div>
-           <p>API Version: {version.api}</p>
-           <p>Server Version: {version.server}</p>
-           <p>Nozzle Diameter: {version.nozzle_diameter}</p>
-           <p>Hostname: {version.hostname}</p>
-           <p>Firmware: {version.firmware}</p>
-           <p>Printer: {version.printer}</p>
-         </div>
-       ) : (
-         <p>Waiting for printer version...</p>
-       )}
+
+
 
 
 

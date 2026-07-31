@@ -53,7 +53,7 @@ pub struct PrinterInfo {
     pub mmu: Option<bool>,
     pub serial: Option<String>,
     pub hostname: Option<String>,
-    pub min_extrution_temp: Option<i64>,
+    pub min_extrusion_temp: Option<i64>,
 }
 
 
