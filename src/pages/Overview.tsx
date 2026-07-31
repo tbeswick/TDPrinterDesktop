@@ -19,12 +19,11 @@ export default function Overview() {
     <div>
       <h2>Printer Overview</h2>
 
-      <div className="card">
-        <p>Test</p>
+      <div>
         {/* <p>State: {status?.printer?.state}</p>
         <p>Bed Temp: {status?.printer?.temp_bed}</p>
         <p>Nozzle Temp: {status?.printer?.temp_nozzle}</p>
-        <p>Target Nozzle Temp: {status?.printer?.target_nozzle}</p> */}
+        <p>Target Nozzle Temp: {status?.printer?.target_nozzle}</p>  */}
       </div>
     </div>
   );

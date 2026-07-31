@@ -23,7 +23,7 @@ export function usePrinterEvents(
                 console.log("File list changed");
 
                 const updatedFiles = await invoke<FileList | null>("get_file_list");
-                 console.log("Updated file list:", updatedFiles);
+                 console.log("Updated file list:", updatedFiles!.children);
                 setFiles(updatedFiles!.children ?? []);
             });
         }

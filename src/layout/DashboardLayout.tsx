@@ -1,4 +1,3 @@
-import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import { ReactNode, useState } from "react";
 import { PrinterStatus } from "../types/printerstatus";
@@ -6,6 +5,11 @@ import { VersionInfo } from "../types/versioninfo";
 import { usePrinterEvents } from "../hooks/usePrinterEvents";
 import { FileItem } from "../types/printerfile";
 import "./layout.css";
+import logo from "../assets/react.svg";
+
+
+//({file.name}) - Type: {file.type} - Last Modified: {new Date(file.m_timestamp * 1000).toLocaleString()}
+
 
 export default function DashboardLayout({
   children,
@@ -30,7 +34,20 @@ export default function DashboardLayout({
       <Topbar />
 
       <div className="app-body">
-        <Sidebar />
+        <aside className="sidebar">
+          <h3>Printer Files</h3>
+                {files
+                  .filter(file => file.type === "PRINT_FILE")
+                  .map(file => (                       
+                      <div key={file.display_name} className="card">
+                        <img src={logo} alt="Logo" style={{width: "20%", margin: "auto"}} />                          
+                        <div className="container">       
+                          <h4><b>{file.display_name}</b></h4>
+                          <p>{`Last Modified: ${new Date(file.m_timestamp * 1000).toLocaleString()}`}</p>
+                        </div>
+                      </div>                                       
+                ))}
+        </aside>
 
         <main className="app-content">
           {children}
@@ -59,6 +76,12 @@ export default function DashboardLayout({
        ) : (
          <p>Waiting for printer version...</p>
        )}
+
+
+
+
+
+
 
 
 

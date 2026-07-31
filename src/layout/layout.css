@@ -5,23 +5,28 @@
   background: #0f1115;
   color: #e6e6e6;
   font-family: system-ui, sans-serif;
+ overflow: hidden; /* Prevent page scrolling */  
 }
 
 /* Top bar */
 .topbar {
-  height: 48px;
+  height: 164px;
   display: flex;
   align-items: center;
   padding: 0 12px;
-  background: #151922;
+  background: #121621;
   border-bottom: 1px solid #222;
+  font-size: 32px;
+  font-weight: bold;
 }
 
 /* Body split */
 .app-body {
   flex: 1;
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 340px 1fr;
+  overflow: hidden;
+  min-height: 0; /* Important! */  
 }
 
 /* Sidebar */
@@ -29,10 +34,39 @@
   background: #121621;
   border-right: 1px solid #222;
   padding: 12px;
+  overflow-y: auto;
+  overflow-x: hidden;  
 }
 
 /* Main content */
 .app-content {
   padding: 16px;
+  background: #4d0303;
   overflow: auto;
+}
+
+.card {
+  /* Add shadows to create the "card" effect */
+  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  transition: 0.3s;
+  border-style: solid;
+  border-color: olive;  
+  border-radius: 15px;
+  margin-top: 20px;  
+  padding-top: 16px;
+  padding-bottom: 16px;
+  background-color: #474645;
+}
+
+/* On mouse-over, add a deeper shadow */
+.card:hover {
+  box-shadow: 0 8px 16px 0 rgba(248, 245, 245, 0.2);
+  border-color: rgb(247, 242, 242);    
+}
+
+/* Add some padding inside the card container */
+.container {
+  padding: 2px 16px;
+  word-wrap: break-word;  
+  font-size: small;
 }
