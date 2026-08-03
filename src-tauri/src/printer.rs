@@ -1,6 +1,7 @@
 
 use crate::{AppState, printer_api::*};
-use crate::models::{PrinterStatus,FileList,FileItem,VersionInfo}; 
+use crate::models::{PrinterStatus,FileList,FileItem,VersionInfo,ThumbnailState}; 
+use std::os::windows::process;
 use std::time::Duration;
 use std::thread;
 use tauri::Emitter;
@@ -42,7 +43,7 @@ const APIKEY:&str = "kpiTr8FC6WmrsJh";
 }
 
 
-async fn process_file(child: FileItem) {
+async fn process_file(child: FileItem) -> Option<Vec<u8>>   {
     println!("Processing {:?}", child.display_name);
 
     if let Some(image) = fetch_file_image(
@@ -52,9 +53,129 @@ async fn process_file(child: FileItem) {
     )
     .await
     {
-        println!("Downloaded {} bytes", image.len());
+        println!("Downloaded {} bytes for {}", image.len(), child.display_name);
+        return Some(image);
+    }
+    else {
+        println!("Failed to download image for {:?}", child.display_name);
+        None
     }
 }
+
+
+async fn get_next_thumbnail_job(
+    app_state: &Arc<AppState>,
+) -> Option<FileItem> {
+
+    let mut file_list = app_state.file_list.write().await;
+
+    let file_list = file_list.as_mut()?;
+    let children = file_list.children.as_mut()?;
+
+    for child in children.iter_mut() {
+
+
+        if child.file_type.as_deref() == Some("PRINT_FILE") && child.thumbnail_state == Some(ThumbnailState::NotStarted) {
+
+            child.thumbnail_state = Some(ThumbnailState::Downloading);
+            println!("Starting download for {:?}", child.display_name);
+            return Some(child.clone());
+        }
+    }
+
+    None
+}
+
+
+async fn download_thumbnail(
+    file: &FileItem,
+) -> Result<Vec<u8>, String> {
+
+    let res = process_file(file.clone()).await;
+    Ok(res.unwrap_or_else(|| Vec::new()))
+}
+
+
+
+async fn update_thumbnail(
+    app_state: &Arc<AppState>,
+    filename: &str,
+    image: Result<Vec<u8>, String>,
+) {
+
+    let mut file_list = app_state.file_list.write().await;
+
+    let Some(file_list) = file_list.as_mut() else {
+        return;
+    };
+
+    let Some(children) = file_list.children.as_mut() else {
+        return;
+    };
+
+    if let Some(child) =
+        children.iter_mut()
+                .find(|f| f.display_name == filename)
+    {
+        match image {
+
+            Ok(bytes) => {
+
+                child.thumbnail_image = Some(bytes);
+                child.thumbnail_state = Some(ThumbnailState::Ready);
+            }
+
+            Err(_) => {
+
+                child.thumbnail_state = Some(ThumbnailState::Failed);
+            }
+        }
+    }
+}
+
+
+pub fn manage_file_thumbnails(
+    app: tauri::AppHandle,
+    app_state: Arc<AppState>,
+) {
+
+    tauri::async_runtime::spawn(async move {
+
+        loop {
+
+            if let Some(file) =
+                get_next_thumbnail_job(&app_state).await
+            {
+                println!(
+                    "Downloading thumbnail for {}",
+                    file.display_name
+                );
+
+                let image =
+                    download_thumbnail(&file).await;
+
+                update_thumbnail(
+                    &app_state,
+                    &file.display_name,
+                    image,
+                ).await;
+
+                let _ = app.emit(
+                    "thumbnail_updated",
+                    &file.display_name,
+                );
+            }
+            else {
+
+                tokio::time::sleep(
+                    std::time::Duration::from_secs(1)
+                ).await;
+            }
+        }
+    });
+}
+
+
 
 
 pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) {
@@ -68,8 +189,12 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
         // settle delay - allows first version event to fire correctly
         tokio::time::sleep(Duration::from_secs(2)).await;        
 
+        // Start a worker to manage file thumbnails
+        manage_file_thumbnails(app.clone(), app_state.clone());        
+
 
         loop {
+
 
             state  = match state {
                 SmState::Connect => {
@@ -111,6 +236,9 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                         {
                             let mut file_list = app_state.file_list.write().await;
                             *file_list = Some(file_list_remote);
+                            for child in file_list.as_mut().unwrap().children.as_mut().unwrap() {
+                                child.thumbnail_state = Some(ThumbnailState::NotStarted);
+                            }
                         }
                         app.emit("file-list-updated", ()).unwrap();
 
@@ -143,6 +271,9 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
         }
     });
 }
+
+
+
 
 
 

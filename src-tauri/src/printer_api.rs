@@ -131,6 +131,7 @@ pub async fn fetch_file_image(
     match client
         .get(url)
         .header("X-Api-Key", api_key)
+        .timeout(Duration::from_secs(120))        
         .send()
         .await
     {

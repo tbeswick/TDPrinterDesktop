@@ -1,5 +1,15 @@
 use serde::{Deserialize, Serialize};
 
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ThumbnailState {
+    NotStarted,
+    Downloading,
+    Ready,
+    Failed,
+}
+
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PrinterStatus {
     pub printer: Option<PrinterTelemetry>,
@@ -67,12 +77,15 @@ pub struct FileList {
 
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+
+
+
 pub struct FileItem {
     #[serde(rename = "name")]
     pub name: Option<String>,
 
     #[serde(rename = "display_name")]
-    pub display_name: Option<String>,
+    pub display_name: String,
 
     #[serde(rename = "type")]
     pub file_type: Option<String>,
@@ -85,6 +98,9 @@ pub struct FileItem {
 
     //#[serde(rename = "thumbnail_image")]
     pub thumbnail_image: Option<Vec<u8>>,
+
+    #[serde(rename = "thumbnail_downloaded")]
+    pub thumbnail_state: Option<ThumbnailState>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
