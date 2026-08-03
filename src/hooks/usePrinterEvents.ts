@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
-import { FileItem, FileList } from "../types/printerfile";
+import { FileItem, FileList, ThumbnailEvent } from "../types/printerfile";
 import { PrinterStatus } from "../types/printerstatus";
 import { VersionInfo } from "../types/versioninfo";
 
@@ -72,4 +72,45 @@ export function usePrinterEvents(
       }
     };
   }, []);  
+
+
+useEffect(() => {
+
+    let unlisten: (() => void) | undefined;
+
+    async function setup() {
+
+        unlisten = await listen<ThumbnailEvent>(
+            "file-image-updated",
+
+            (event) => {
+
+                const thumbnail = event.payload;
+
+                setFiles(oldFiles =>
+
+                    oldFiles.map(file => {
+
+                        if (file.thumbnail_path !== thumbnail.path)
+                            return file;
+
+                        return {
+                            ...file,
+                            image: thumbnail.image
+                        };
+                    })
+                );
+            }
+        );
+    }
+
+    setup();
+
+    return () => {
+        unlisten?.();
+    };
+
+}, []);
+
+
 }

@@ -1,13 +1,10 @@
 
 use crate::{AppState, printer_api::*};
 use crate::models::{PrinterStatus,FileList,FileItem,VersionInfo,ThumbnailState}; 
-use std::os::windows::process;
 use std::time::Duration;
-use std::thread;
 use tauri::Emitter;
-use std::sync::{Mutex, OnceLock};
 use std::sync::Arc;
-use tokio::sync::RwLock;
+use std::fs;
 
 enum SmState{
     Connect,
@@ -26,6 +23,7 @@ enum SmState{
 
 const PRINTER_IP:&str = "192.168.1.76";
 const APIKEY:&str = "kpiTr8FC6WmrsJh";
+const IMAGE_CACHE_DIR:&str = "../image_cache";
 
 
 
@@ -98,6 +96,7 @@ async fn download_thumbnail(
 
 
 async fn update_thumbnail(
+    app: &tauri::AppHandle,    
     app_state: &Arc<AppState>,
     filename: &str,
     image: Result<Vec<u8>, String>,
@@ -122,7 +121,19 @@ async fn update_thumbnail(
             Ok(bytes) => {
 
                 child.thumbnail_image = Some(bytes);
+
+                // save the image to the cache directory
+                let cache_path = format!("{}/{}.png", IMAGE_CACHE_DIR, filename);
+                child.thumbnail_path = Some(cache_path.clone());
+                if let Err(e) = fs::write(&cache_path, child.thumbnail_image.as_ref().unwrap()) {
+                    println!("Failed to save image to cache: {}", e);
+                }                
                 child.thumbnail_state = Some(ThumbnailState::Ready);
+                println!("Thumbnail for {} is ready and saved to {}", filename, child.thumbnail_path.as_ref().unwrap());
+
+                // update app state
+                app.emit("file-image-updated", &child).unwrap();
+
             }
 
             Err(_) => {
@@ -155,15 +166,21 @@ pub fn manage_file_thumbnails(
                     download_thumbnail(&file).await;
 
                 update_thumbnail(
+                    &app,
                     &app_state,
                     &file.display_name,
                     image,
                 ).await;
 
-                let _ = app.emit(
-                    "thumbnail_updated",
-                    &file.display_name,
+                println!(
+                    "Thumbnail p for {} is now ready",
+                    file.thumbnail_path.as_ref().unwrap_or(&"unknown".to_string())
                 );
+
+                // let _ = app.emit(
+                //     "file-image-updated",
+                //     &file,
+                // );
             }
             else {
 
@@ -185,6 +202,14 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
     tauri::async_runtime::spawn(async move {
 
         let mut state = SmState::Connect;
+
+        // Create the image cache directory if it doesn't exist
+        if !std::path::Path::new(IMAGE_CACHE_DIR).exists() {
+            if let Err(e) = fs::create_dir_all(IMAGE_CACHE_DIR) {
+                println!("Failed to create image cache directory: {}", e);
+            }
+        }
+
 
         // settle delay - allows first version event to fire correctly
         tokio::time::sleep(Duration::from_secs(2)).await;        

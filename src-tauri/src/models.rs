@@ -101,6 +101,9 @@ pub struct FileItem {
 
     #[serde(rename = "thumbnail_downloaded")]
     pub thumbnail_state: Option<ThumbnailState>,
+
+
+    pub thumbnail_path: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
