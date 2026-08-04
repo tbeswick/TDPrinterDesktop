@@ -3,6 +3,7 @@ import { PrinterStatus } from "../types/printerstatus";
 import { VersionInfo } from "../types/versioninfo";
 import { usePrinterEvents } from "../hooks/usePrinterEvents";
 import { FileItem } from "../types/printerfile";
+import { invoke } from "@tauri-apps/api/core";
 import "./layout.css";
 
 
@@ -16,6 +17,7 @@ export default function DashboardLayout({
   const [status, setStatus] = useState<PrinterStatus | null>(null);
   const [files, setFiles] = useState<FileItem[]>([]); 
   const [version, setVersion] = useState<VersionInfo | null>(null);
+   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
 
 
      usePrinterEvents(
@@ -23,6 +25,13 @@ export default function DashboardLayout({
          setFiles,
          setVersion
      );
+
+
+  async function handleCardClick(cardId: String) {
+    const fileItem = await invoke<FileItem>("card_clicked", { cardId });
+    setSelectedFile(fileItem);
+  }     
+
 
 
   return (
@@ -56,12 +65,10 @@ export default function DashboardLayout({
                 {files
                   .filter(file => file.type === "PRINT_FILE")
                   .map(file => (                       
-                      <div key={file.display_name} className="card">
-                        <img src={file.thumbnail_path} alt="Logo" style={{width: "100px", height: "100px", margin: "auto"}} />                          
-                        <div className="container">       
-                          <h4><b>{file.display_name}</b></h4>
-                          <p>{`Last Modified: ${new Date(file.m_timestamp * 1000).toLocaleString()}`}</p>
-                        </div>
+                      <div key={file.display_name} className="card" onClick={() => handleCardClick(file.display_name)}>
+                        <img src={file.thumbnail_path} alt="Logo" style={{width: "40px", height: "40px"}} />                                                      
+                        <p>{file.display_name}</p>
+                        <p>{`Last Modified: ${new Date(file.m_timestamp * 1000).toLocaleString()}`}</p>      
                       </div>                                       
                 ))}
         </aside>
@@ -69,7 +76,7 @@ export default function DashboardLayout({
         <main className="app-content">
           {children}
 
-       {status ? (
+       {/* {status ? (
          <div>
            <p>State: {status.printer.state}</p>
            <p>Nozzle: {status.printer.temp_nozzle} °C</p>
@@ -78,10 +85,34 @@ export default function DashboardLayout({
          </div>
        ) : (
          <p>Waiting for printer...</p>
-       )}
+       )} */}
 
 
+        {selectedFile && (
+          <div className="file-details">
+            <h2>Selected File Details</h2>            
+            <p>{selectedFile.display_name}</p>
+            <img src={selectedFile.thumbnail_path} alt="Thumbnail" style={{width: "260px", height: "260px"}} />
+            <p>Type: {selectedFile.type}</p>
+            <p>Last Modified: {new Date(selectedFile.m_timestamp * 1000).toLocaleString()}</p>
+            <p>{selectedFile.name}</p>
 
+
+            <div className="button-row">
+                <button className="delete-btn">Delete File</button>
+                {/* <button className="pause-btn" style={{visibility: "hidden"}}>Pause Print</button>                 */}
+                <button className="print-btn">Print File</button>
+            </div>
+
+
+          </div>
+        )}
+
+
+        <div className="file-details" style={{visibility: selectedFile ? "hidden" : "visible"}}>
+            <h2>File Details</h2>
+            <p>Select a file to see details</p>
+        </div>
 
 
 

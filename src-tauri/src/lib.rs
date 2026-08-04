@@ -1,4 +1,4 @@
-use crate::models::{FileList};
+use crate::models::{FileList, FileItem};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 mod printer;
@@ -12,6 +12,22 @@ pub struct AppState {
     pub file_list: Arc<RwLock<Option<FileList>>>,
 }
 
+
+#[tauri::command]
+async fn card_clicked(state: tauri::State<'_, Arc<AppState>>,  card_id: String) ->Result<Option<FileItem>, String> {
+
+    let file_list = state.file_list.read().await;
+
+    if let Some(file_list) = &*file_list {
+        if let Some(file_item) = file_list.children.as_ref().unwrap().iter().find(|item| item.display_name == card_id) {
+            return Ok(Some(file_item.clone()));
+        }else{
+            Err("File not found".into())
+        }
+    }else{
+        Err("File not found".into())
+    }
+}
 
 
 #[tauri::command]
@@ -47,7 +63,7 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![get_file_list])
+        .invoke_handler(tauri::generate_handler![get_file_list, card_clicked])
         .run(tauri::generate_context!())
         .expect("error while running printer application");
 }

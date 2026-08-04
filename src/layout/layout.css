@@ -43,30 +43,99 @@
   padding: 16px;
   background: #4d0303;
   overflow: auto;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  grid-template-rows: auto;  
 }
 
 .card {
   /* Add shadows to create the "card" effect */
-  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  /* box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2); */
   transition: 0.3s;
   border-style: solid;
   border-color: olive;  
-  border-radius: 15px;
-  margin-top: 20px;  
-  padding-top: 16px;
-  padding-bottom: 16px;
+  border-radius: 5px;
+  margin-top: 10px;  
+  padding: 6px;
   background-color: #474645;
+  opacity: 0.7; 
+}
+
+.card p {
+  margin: 0;
+  padding: 0;
+  text-align: center;
+  color: #e6e6e6;
+  font-size: small;
+  word-wrap: break-word;
 }
 
 /* On mouse-over, add a deeper shadow */
 .card:hover {
   box-shadow: 0 8px 16px 0 rgba(248, 245, 245, 0.2);
   border-color: rgb(247, 242, 242);    
+  opacity: 1;  
 }
 
-/* Add some padding inside the card container */
+/* Add some padding inside the card container 
 .container {
   padding: 2px 16px;
   word-wrap: break-word;  
   font-size: small;
+}*/
+
+.file-details {
+    background-color: #1e1e1e;
+    border: 1px solid #eceaea;
+    border-radius: 15px;
+    padding: 1rem;
+    grid-column: 1;      
+    grid-row: 1;   
+    text-align: center;
+    height: 480px;
+     width: 360px; 
+}
+
+.file-details h2 {
+  color: #f5f1f1;
+  word-wrap: break-word;
+  font-size: 1.25rem;
+}
+
+.file-details p {
+  color: #e79090;
+  word-wrap: break-word;
+}
+
+.button-row {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1rem;
+}
+
+.button-row button {
+    flex: 1;              /* Makes all three buttons equal width */
+    padding: 0.75rem 1rem;
+    border: 1px solid #eceaea;
+    border-radius: 6px;
+    color: rgb(241, 234, 234);
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.button-row button:hover {
+    opacity: 0.85;
+}
+
+.delete-btn {
+    background-color: #dc3545;
+}
+
+.print-btn {
+    background-color: #28a745;
+}
+
+.pause-btn {
+    background-color: #007bff;
 }

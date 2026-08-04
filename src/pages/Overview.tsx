@@ -17,7 +17,7 @@ export default function Overview() {
 
   return (
     <div>
-      <h2>Printer Overview</h2>
+      
 
       <div>
         {/* <p>State: {status?.printer?.state}</p>
