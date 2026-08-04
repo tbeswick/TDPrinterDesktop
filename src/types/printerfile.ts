@@ -14,18 +14,3 @@ export interface FileList {
     children?: FileItem[];
 }
 
-
-export interface ThumbnailEvent {
-    path: string;
-    image: number[];
-}
-
-export function imageBytesToUrl(bytes: number[]) {
-
-    const blob = new Blob(
-        [new Uint8Array(bytes)],
-        { type: "image/png" }
-    );
-
-    return URL.createObjectURL(blob);
-}

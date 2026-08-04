@@ -177,10 +177,6 @@ pub fn manage_file_thumbnails(
                     file.thumbnail_path.as_ref().unwrap_or(&"unknown".to_string())
                 );
 
-                // let _ = app.emit(
-                //     "file-image-updated",
-                //     &file,
-                // );
             }
             else {
 
@@ -262,7 +258,9 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                             let mut file_list = app_state.file_list.write().await;
                             *file_list = Some(file_list_remote);
                             for child in file_list.as_mut().unwrap().children.as_mut().unwrap() {
-                                child.thumbnail_state = Some(ThumbnailState::NotStarted);
+                                child.thumbnail_image = None;
+                                child.thumbnail_path = check_for_cache_image(&child.display_name); 
+                                child.thumbnail_state = check_for_cache_state(&child.display_name);
                             }
                         }
                         app.emit("file-list-updated", ()).unwrap();
@@ -299,7 +297,23 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
 
 
 
+fn check_for_cache_image(filename: &str) -> Option<String> {
+    let cache_path = format!("{}/{}.png", IMAGE_CACHE_DIR, filename);
+    if std::path::Path::new(&cache_path).exists() {
+        Some(cache_path)
+    } else {
+        Some("tauri.svg".to_string()) // Return a default image path if not found
+    }
+}
 
+fn check_for_cache_state(filename: &str) -> Option<ThumbnailState> {
+    let cache_path = format!("{}/{}.png", IMAGE_CACHE_DIR, filename);
+    if std::path::Path::new(&cache_path).exists() {
+        Some(ThumbnailState::Ready)
+    } else {
+        Some(ThumbnailState::NotStarted) // Return a default state if not found
+    }
+}
 
 
 

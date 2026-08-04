@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
-import { FileItem, FileList, ThumbnailEvent } from "../types/printerfile";
+import { FileItem, FileList } from "../types/printerfile";
 import { PrinterStatus } from "../types/printerstatus";
 import { VersionInfo } from "../types/versioninfo";
 
@@ -78,33 +78,48 @@ useEffect(() => {
 
     let unlisten: (() => void) | undefined;
 
-    async function setup() {
 
-        unlisten = await listen<ThumbnailEvent>(
-            "file-image-updated",
+        async function setupListener() {
 
-            (event) => {
+            unlisten = await listen("file-image-updated", async () => {
 
-                const thumbnail = event.payload;
+                const updatedFiles = await invoke<FileList | null>("get_file_list");
+                 console.log("Updated file list:", updatedFiles!.children);
+                setFiles(updatedFiles!.children ?? []);
+            });
+        }
 
-                setFiles(oldFiles =>
+        setupListener();    
 
-                    oldFiles.map(file => {
 
-                        if (file.thumbnail_path !== thumbnail.path)
-                            return file;
+    // async function setup() {
 
-                        return {
-                            ...file,
-                            image: thumbnail.image
-                        };
-                    })
-                );
-            }
-        );
-    }
+    //     unlisten = await listen<ThumbnailEvent>(
+    //         "file-image-updated",
 
-    setup();
+    //         (event) => {
+
+    //             const thumbnail = event.payload;
+
+    //             setFiles(oldFiles =>
+
+    //                 oldFiles.map(file => {
+
+    //                    console.log("Updating file:", file.thumbnail_path, "with thumbnail path:", thumbnail.path);
+    //                     if (file.thumbnail_path !== thumbnail.path)
+    //                         return file;
+
+    //                     return {
+    //                         ...file,
+    //                         image: thumbnail.image
+    //                     };
+    //                 })
+    //             );
+    //         }
+    //     );
+    // }
+
+    //setup();
 
     return () => {
         unlisten?.();

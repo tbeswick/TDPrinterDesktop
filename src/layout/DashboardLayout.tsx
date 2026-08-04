@@ -2,9 +2,9 @@ import { ReactNode, useState } from "react";
 import { PrinterStatus } from "../types/printerstatus";
 import { VersionInfo } from "../types/versioninfo";
 import { usePrinterEvents } from "../hooks/usePrinterEvents";
-import { FileItem, imageBytesToUrl } from "../types/printerfile";
+import { FileItem } from "../types/printerfile";
 import "./layout.css";
-import logo from "../assets/react.svg";
+
 
 
 export default function DashboardLayout({
@@ -57,7 +57,7 @@ export default function DashboardLayout({
                   .filter(file => file.type === "PRINT_FILE")
                   .map(file => (                       
                       <div key={file.display_name} className="card">
-                        <img src={imageBytesToUrl(file.image ?? [])} alt="Logo" style={{width: "20%", margin: "auto"}} />                          
+                        <img src={file.thumbnail_path} alt="Logo" style={{width: "100px", height: "100px", margin: "auto"}} />                          
                         <div className="container">       
                           <h4><b>{file.display_name}</b></h4>
                           <p>{`Last Modified: ${new Date(file.m_timestamp * 1000).toLocaleString()}`}</p>
