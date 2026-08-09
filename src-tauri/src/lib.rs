@@ -1,4 +1,4 @@
-use crate::models::{FileList, FileItem};
+use crate::models::{FileList, FileItem, SmState};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 mod printer;
@@ -10,6 +10,7 @@ mod models;
 
 pub struct AppState {
     pub file_list: Arc<RwLock<Option<FileList>>>,
+    pub delete_filename: Arc<RwLock<Option<String>>>,
 }
 
 
@@ -51,6 +52,7 @@ pub fn run() {
       
     let app_state = AppState {
         file_list: Arc::new(RwLock::new(None)),
+        delete_filename: Arc::new(RwLock::new(None))
     };
 
     let background_state = Arc::new(app_state);
@@ -63,7 +65,19 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![get_file_list, card_clicked])
+        .invoke_handler(tauri::generate_handler![get_file_list, card_clicked, deletebutton_clicked])
         .run(tauri::generate_context!())
         .expect("error while running printer application");
+}
+
+
+#[tauri::command]
+async fn deletebutton_clicked( state: tauri::State<'_, Arc<AppState>>,name: String) -> Result<(), String> {
+    
+    println!("Delete button clicked for file: {}", name);
+    let Result =  printer::set_delete_file(&mut *state.delete_filename.write().await, &name).await;
+
+
+    
+    Ok(())
 }

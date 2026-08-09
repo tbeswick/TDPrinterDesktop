@@ -10,6 +10,24 @@ pub enum ThumbnailState {
 }
 
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SmState{
+    Connect,
+    Info,
+    Files,
+    Idle,
+    Status,
+    // UploadFile,
+     DeleteFile,
+    // NewJob,
+    // SendPrintJob,
+    // StopPrintJob,
+    // PausePrintJob,
+    // ResumePrintJob
+}
+
+
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PrinterStatus {
     pub printer: Option<PrinterTelemetry>,

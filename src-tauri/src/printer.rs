@@ -5,21 +5,9 @@ use std::time::Duration;
 use tauri::Emitter;
 use std::sync::Arc;
 use std::fs;
+use crate::models::{SmState};
 
-enum SmState{
-    Connect,
-    Info,
-    Files,
-    Idle,
-    Status,
-    // UploadFile,
-    // DeleteFile,
-    // NewJob,
-    // SendPrintJob,
-    // StopPrintJob,
-    // PausePrintJob,
-    // ResumePrintJob
-}
+
 
 const PRINTER_IP:&str = "192.168.1.76";
 const APIKEY:&str = "kpiTr8FC6WmrsJh";
@@ -145,6 +133,28 @@ async fn update_thumbnail(
 }
 
 
+pub async fn set_delete_file(     
+    delete_filename: &mut Option<String>, filename: &str) -> Result<(), String> {           
+
+    println!("Delete file requested for {}", filename);
+    // Implement the logic to delete the file here, e.g., call the delete_print_file function
+    // let result = delete_print_file(PRINTER_IP, APIKEY, filename).await;
+    // if result.is_err() {
+    //     println!("Error deleting file: {:?}", result.err());
+    //     return Err(format!("Error deleting file: {:?}", filename));
+    // }
+
+
+    delete_filename.replace(filename.to_string());
+    println!("Delete filename set to: {:?}", delete_filename);
+
+
+    Ok(())
+
+}
+
+
+
 pub fn manage_file_thumbnails(
     app: tauri::AppHandle,
     app_state: Arc<AppState>,
@@ -216,6 +226,13 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
 
         loop {
 
+            // check for delete file request
+            let mut delete_filename = app_state.delete_filename.write().await;
+            if delete_filename.is_some() && !delete_filename.as_ref().unwrap().is_empty() {
+                state = SmState::DeleteFile;
+            }
+
+
 
             state  = match state {
                 SmState::Connect => {
@@ -267,6 +284,12 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
 
                         SmState::Status // Transition to Status state on success
                     }                    
+                }
+                SmState::DeleteFile => {
+                    println!("Deleting file...{}", delete_filename.as_ref().unwrap());
+                    delete_filename.replace("".to_string());// Clear the delete filename after processing
+                    // Implement file deletion logic here
+                    SmState::Status // Transition to Status state after deletion
                 }
                 SmState::Idle => {
                     println!("Printer is idle.");

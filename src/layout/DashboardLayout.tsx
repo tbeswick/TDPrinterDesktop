@@ -34,6 +34,17 @@ export default function DashboardLayout({
 
 
 
+  async function handleDeleteButtonClick() {
+    await invoke<string>("deletebutton_clicked", {
+      name: selectedFile?.name || "Unknown",
+    });
+
+    console.log("Delete button clicked for file: ", selectedFile?.name);
+  }
+
+
+
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -68,7 +79,7 @@ export default function DashboardLayout({
                       <div key={file.display_name} className="card" onClick={() => handleCardClick(file.display_name)}>
                         <img src={file.thumbnail_path} alt="Logo" style={{width: "40px", height: "40px"}} />                                                      
                         <p>{file.display_name}</p>
-                        <p>{`Last Modified: ${new Date(file.m_timestamp * 1000).toLocaleString()}`}</p>      
+                        {/* <p>{`Last Modified: ${new Date(file.m_timestamp * 1000).toLocaleString()}`}</p>       */}
                       </div>                                       
                 ))}
         </aside>
@@ -91,15 +102,17 @@ export default function DashboardLayout({
         {selectedFile && (
           <div className="file-details">
             <h2>Selected File Details</h2>            
-            <p>{selectedFile.display_name}</p>
             <img src={selectedFile.thumbnail_path} alt="Thumbnail" style={{width: "260px", height: "260px"}} />
+            <p>{selectedFile.display_name}</p>            
             <p>Type: {selectedFile.type}</p>
             <p>Last Modified: {new Date(selectedFile.m_timestamp * 1000).toLocaleString()}</p>
-            <p>{selectedFile.name}</p>
+            <p>System name: {selectedFile.name}</p>
 
 
             <div className="button-row">
-                <button className="delete-btn">Delete File</button>
+                <button className="delete-btn" onClick={handleDeleteButtonClick}>
+                    Delete File
+                </button>
                 {/* <button className="pause-btn" style={{visibility: "hidden"}}>Pause Print</button>                 */}
                 <button className="print-btn">Print File</button>
             </div>
@@ -113,6 +126,13 @@ export default function DashboardLayout({
             <h2>File Details</h2>
             <p>Select a file to see details</p>
         </div>
+
+
+
+        <div className="file-details" style={{ visibility: selectedFile ? "visible" : "hidden", gridColumn: "2", gridRow: "1" }}>
+            <h2>Job File Details</h2>
+            <p>Current print job information will be displayed here.</p>
+        </div>        
 
 
 

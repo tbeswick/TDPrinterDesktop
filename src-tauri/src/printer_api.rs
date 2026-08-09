@@ -153,3 +153,26 @@ pub async fn fetch_file_image(
 
 
 }
+
+
+pub async fn delete_print_file(ip: &str, api_key: &str, filename: &str) -> Result<(),String> {
+    let url = format!("http://{}/api/v1/files/usb/{}", ip, filename);
+
+    let client = Client::new();
+
+    let res = client
+        .delete(&url)
+        .header("X-Api-Key", api_key)
+        .timeout(LONG_CONNECT_TIMEOUT)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !res.status().is_success() {
+        println!("HTTP error: {}", res.status());
+        return Err(format!("HTTP error: {}", res.status()));
+    }
+
+
+    Ok(())  
+}
