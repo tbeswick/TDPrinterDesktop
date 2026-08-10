@@ -9,7 +9,8 @@ import { VersionInfo } from "../types/versioninfo";
 export function usePrinterEvents(
     setStatus: React.Dispatch<React.SetStateAction<PrinterStatus | null>>,
     setFiles: React.Dispatch<React.SetStateAction<FileItem[]>>,
-    setVersion: React.Dispatch<React.SetStateAction<VersionInfo | null>>
+    setVersion: React.Dispatch<React.SetStateAction<VersionInfo | null>>,
+    setShowWarning: React.Dispatch<React.SetStateAction<boolean | null>>
 ) {
 
     useEffect(() => {
@@ -72,6 +73,26 @@ export function usePrinterEvents(
       }
     };
   }, []);  
+
+
+
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+
+    listen<String>("delete-file-contention", (event) => {
+      console.log("delete-file-contention update:", event.payload);
+      setShowWarning(true);
+    }).then((fn) => {
+      unlisten = fn;
+    });
+
+    return () => {
+      if (unlisten) {
+        unlisten();
+      }
+    };
+  }, []);   
+
 
 
 useEffect(() => {

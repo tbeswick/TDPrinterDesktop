@@ -19,12 +19,15 @@ export default function DashboardLayout({
   const [files, setFiles] = useState<FileItem[]>([]); 
   const [version, setVersion] = useState<VersionInfo | null>(null);
    const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
+  const [showWarning, setShowWarning] = useState<boolean | null>(null);
+
 
 
      usePrinterEvents(
          setStatus,
          setFiles,
-         setVersion
+         setVersion,
+         setShowWarning
      );
 
 
@@ -118,6 +121,26 @@ export default function DashboardLayout({
         <main className="app-content">
           {children}
 
+
+        {showWarning && (
+            <div className="warning-overlay">
+                <div className="warning-dialog">
+                    <h2>File In Use</h2>
+
+                    <p>
+                        This file cannot be deleted because it is currently
+                        being used by another process. Check printer status and try again later.
+                    </p>
+
+                    <button onClick={() => setShowWarning(false)}>
+                        OK
+                    </button>
+                </div>
+            </div>
+        )}
+
+
+
        {/* {status ? (
          <div>
            <p>State: {status.printer.state}</p>
@@ -164,14 +187,6 @@ export default function DashboardLayout({
             <h2>Job File Details</h2>
             <p>Current print job information will be displayed here.</p>
         </div>        
-
-
-
-
-
-
-
-
 
         </main>
       </div>

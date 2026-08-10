@@ -318,17 +318,26 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                 }
                 SmState::DeleteFile => {
                     println!("Deleting file...{}", delete_filename.as_ref().unwrap());
-                    let delete_file = delete_print_file(PRINTER_IP, APIKEY, delete_filename.as_ref().unwrap()).await.map_err(|e| e.to_string());
-                    if delete_file.is_err() {
-                        println!("Error deleting file: {:?}", delete_file.err());
-                        // Handle the error, maybe retry or transition to an error state
-                        SmState::Connect // Retry connecting
-                    } else {
-                        delete_filename.replace("".to_string());// Clear the delete filename after processing                           
+                    let delete_result = delete_print_file(PRINTER_IP, APIKEY, delete_filename.as_ref().unwrap()).await.map_err(|e| e.to_string());                
+                    if let Err(error) = delete_result {
+                        if error.contains("409 Conflict") {
+                            let cp_delete_filename = delete_filename.as_ref().unwrap().clone();                          
+                            // Handle the contention
+                            println!("File is currently in use");
+                            app.emit("delete-file-contention", cp_delete_filename).unwrap();    
+                            delete_filename.replace("".to_string());// Clear the delete filename after processing                                                       
+                            SmState::Status
+                        } else {
+                            println!("Delete failed: {}", error);
+                            delete_filename.replace("".to_string());// Clear the delete filename after processing                               
+                            SmState::Status // Transition to Status state on error, maybe retry or transition to an error state
+                        }
+                    }else{
                         println!("File deleted successfully: {}", delete_filename.as_ref().unwrap());
+                        delete_filename.replace("".to_string());// Clear the delete filename after processing                           
                         SmState::Files // Transition to Files state on success                     
                     }
-
+                            
                 }
                 SmState::UploadFile => {
                     println!("Uploading file...{}", upload_filename.as_ref().unwrap());

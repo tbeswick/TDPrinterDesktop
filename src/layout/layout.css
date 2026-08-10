@@ -146,3 +146,27 @@
 .add-file-btn {
     background-color: #ff9100;
 }
+
+.warning-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+}
+
+.warning-dialog {
+    width: 400px;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    color: black;
+}
+
+.warning-dialog button {
+    margin-top: 1rem;
+    padding: 0.5rem 1.5rem;
+}
