@@ -17,7 +17,7 @@ pub enum SmState{
     Files,
     Idle,
     Status,
-    // UploadFile,
+    UploadFile,
      DeleteFile,
     // NewJob,
     // SendPrintJob,

@@ -135,23 +135,20 @@ async fn update_thumbnail(
 
 pub async fn set_delete_file(     
     delete_filename: &mut Option<String>, filename: &str) -> Result<(), String> {           
-
     println!("Delete file requested for {}", filename);
-    // Implement the logic to delete the file here, e.g., call the delete_print_file function
-    // let result = delete_print_file(PRINTER_IP, APIKEY, filename).await;
-    // if result.is_err() {
-    //     println!("Error deleting file: {:?}", result.err());
-    //     return Err(format!("Error deleting file: {:?}", filename));
-    // }
-
-
     delete_filename.replace(filename.to_string());
     println!("Delete filename set to: {:?}", delete_filename);
-
-
     Ok(())
-
 }
+
+pub async fn set_upload_file(     
+    upload_filename: &mut Option<String>, filename: &str) -> Result<(), String> {           
+    println!("Upload file requested for {}", filename);
+    upload_filename.replace(filename.to_string());
+    println!("Upload filename set to: {:?}", upload_filename);
+    Ok(())
+}   
+
 
 
 
@@ -232,6 +229,11 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                 state = SmState::DeleteFile;
             }
 
+            let mut upload_filename = app_state.upload_filename.write().await;
+            if upload_filename.is_some() && !upload_filename.as_ref().unwrap().is_empty() {
+                state = SmState::UploadFile;
+            }
+
 
 
             state  = match state {
@@ -282,14 +284,64 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                         }
                         app.emit("file-list-updated", ()).unwrap();
 
+                        // clean the cache directory, loop files and delete any png files that are not in the current file list
+                        if let Ok(entries) = fs::read_dir(IMAGE_CACHE_DIR) {
+                            for entry in entries {
+                                if let Ok(entry) = entry {
+                                    let path = entry.path();
+                                    if path.is_file() && path.extension().map_or(false, |ext| ext == "png") {
+                                        let filename = path.file_stem().unwrap().to_string_lossy().to_string();
+                                        let file_list = app_state.file_list.read().await;
+                                        let file_list = file_list.as_ref();
+                                        let children = file_list.and_then(|fl| fl.children.as_ref());
+                                        let exists_in_file_list = children.map_or(false, |children| {
+                                            children.iter().any(|child| child.display_name == filename)
+                                        });
+                                        if !exists_in_file_list {
+                                            if let Err(e) = fs::remove_file(&path) {
+                                                println!("Failed to delete cached image {}: {}", path.display(), e);
+                                            } else {
+                                                println!("Deleted cached image not in file list: {}", path.display());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+
+
+
+
                         SmState::Status // Transition to Status state on success
                     }                    
                 }
                 SmState::DeleteFile => {
                     println!("Deleting file...{}", delete_filename.as_ref().unwrap());
-                    delete_filename.replace("".to_string());// Clear the delete filename after processing
-                    // Implement file deletion logic here
-                    SmState::Status // Transition to Status state after deletion
+                    let delete_file = delete_print_file(PRINTER_IP, APIKEY, delete_filename.as_ref().unwrap()).await.map_err(|e| e.to_string());
+                    if delete_file.is_err() {
+                        println!("Error deleting file: {:?}", delete_file.err());
+                        // Handle the error, maybe retry or transition to an error state
+                        SmState::Connect // Retry connecting
+                    } else {
+                        delete_filename.replace("".to_string());// Clear the delete filename after processing                           
+                        println!("File deleted successfully: {}", delete_filename.as_ref().unwrap());
+                        SmState::Files // Transition to Files state on success                     
+                    }
+
+                }
+                SmState::UploadFile => {
+                    println!("Uploading file...{}", upload_filename.as_ref().unwrap());
+                    let upload_file = upload_printer_file(PRINTER_IP, APIKEY, upload_filename.as_ref().unwrap()).await.map_err(|e| e.to_string());
+                    if upload_file.is_err() {
+                        println!("Error uploading file: {:?}", upload_file.err());
+                        // Handle the error, maybe retry or transition to an error state
+                        SmState::Connect // Retry connecting
+                    } else {
+                        upload_filename.replace("".to_string());// Clear the upload filename after processing                           
+                        println!("File uploaded successfully: {}", upload_filename.as_ref().unwrap());
+                        SmState::Files // Transition to Files state on success                     
+                    }
                 }
                 SmState::Idle => {
                     println!("Printer is idle.");

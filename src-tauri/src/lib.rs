@@ -11,6 +11,7 @@ mod models;
 pub struct AppState {
     pub file_list: Arc<RwLock<Option<FileList>>>,
     pub delete_filename: Arc<RwLock<Option<String>>>,
+    pub upload_filename: Arc<RwLock<Option<String>>>,
 }
 
 
@@ -45,6 +46,17 @@ async fn get_file_list(
 }
 
 
+#[tauri::command]
+async fn send_gcode(state: tauri::State<'_, Arc<AppState>>,path: String) -> Result<String, String> {
+    // Send `contents` to your printer API here.
+    println!("Sending G-code to printer: {}", path);
+
+    _ =  printer::set_upload_file(&mut *state.upload_filename.write().await, &path).await;    
+
+    Ok(format!("Sent {}", path))
+}
+
+
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -52,7 +64,8 @@ pub fn run() {
       
     let app_state = AppState {
         file_list: Arc::new(RwLock::new(None)),
-        delete_filename: Arc::new(RwLock::new(None))
+        delete_filename: Arc::new(RwLock::new(None)),
+        upload_filename: Arc::new(RwLock::new(None))
     };
 
     let background_state = Arc::new(app_state);
@@ -65,7 +78,12 @@ pub fn run() {
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![get_file_list, card_clicked, deletebutton_clicked])
+        .plugin(tauri_plugin_dialog::init())        
+        .invoke_handler(tauri::generate_handler![
+            get_file_list,
+            card_clicked,
+            send_gcode,
+            deletebutton_clicked])
         .run(tauri::generate_context!())
         .expect("error while running printer application");
 }
@@ -75,9 +93,6 @@ pub fn run() {
 async fn deletebutton_clicked( state: tauri::State<'_, Arc<AppState>>,name: String) -> Result<(), String> {
     
     println!("Delete button clicked for file: {}", name);
-    let Result =  printer::set_delete_file(&mut *state.delete_filename.write().await, &name).await;
-
-
-    
+    _ =  printer::set_delete_file(&mut *state.delete_filename.write().await, &name).await;    
     Ok(())
 }

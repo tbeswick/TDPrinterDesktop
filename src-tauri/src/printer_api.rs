@@ -3,7 +3,7 @@
 
 use std::time::Duration;
 
-use reqwest::Client;
+use reqwest::{Client, StatusCode};
 use crate::models::{PrinterStatus,VersionInfo, PrinterInfo, FileList};
 
 
@@ -155,7 +155,7 @@ pub async fn fetch_file_image(
 }
 
 
-pub async fn delete_print_file(ip: &str, api_key: &str, filename: &str) -> Result<(),String> {
+pub async fn delete_print_file(ip: &str, api_key: &str, filename: &str) -> Result<StatusCode,String> {
     let url = format!("http://{}/api/v1/files/usb/{}", ip, filename);
 
     let client = Client::new();
@@ -174,5 +174,54 @@ pub async fn delete_print_file(ip: &str, api_key: &str, filename: &str) -> Resul
     }
 
 
-    Ok(())  
+    Ok(res.status())  
+}
+
+
+pub async fn upload_printer_file(
+    ip: &str,
+    api_key: &str,
+    local_file_path: &str) -> Result<u16,String> {
+        
+
+    let path = std::path::Path::new(local_file_path);
+
+    let file_name = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or("Invalid file name")?;    
+
+
+    let url = format!("http://{}/api/v1/files/usb/{}", ip, file_name);
+
+    println!("Uploading file to URL: {}", url);
+
+
+    let file_content = tokio::fs::read(path)
+        .await
+        .map_err(|e| format!("Could not read file: {}", e))?;    
+
+
+
+    let client = Client::builder()
+        .timeout(Duration::from_secs(20))
+        .build()
+        .map_err(|e| format!("Could not create HTTP client: {}", e))?;
+
+
+    let response = client
+        .put(&url)
+        .header("X-Api-Key", api_key)
+        .timeout(LONG_CONNECT_TIMEOUT)
+        .header("Overwrite", "?1")
+        .header("Print-After-Upload", "?0")
+        .body(file_content)
+        .send()
+        .await
+        .map_err(|e| format!("Upload failed: {}", e))?;
+
+    Ok(response.status().as_u16())
+
+
+
 }

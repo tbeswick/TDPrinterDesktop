@@ -4,6 +4,7 @@ import { VersionInfo } from "../types/versioninfo";
 import { usePrinterEvents } from "../hooks/usePrinterEvents";
 import { FileItem } from "../types/printerfile";
 import { invoke } from "@tauri-apps/api/core";
+import { open } from "@tauri-apps/plugin-dialog";
 import "./layout.css";
 
 
@@ -32,12 +33,39 @@ export default function DashboardLayout({
     setSelectedFile(fileItem);
   }     
 
+  async function handleAddFileClick() {
 
+    console.log("Add File button clicked");
+
+    const selected = await open({
+        multiple: false,
+        filters: [
+            {
+                name: "G-code files",
+                extensions: ["bgcode"],
+            },
+        ],
+    });
+
+    if (!selected) {
+        return; // User cancelled
+    }
+
+    console.log("Selected:", selected);
+
+    const result = await invoke<string>("send_gcode", {
+        path: selected,
+    });
+
+    console.log(result);
+}
 
   async function handleDeleteButtonClick() {
     await invoke<string>("deletebutton_clicked", {
       name: selectedFile?.name || "Unknown",
     });
+
+    selectedFile && setSelectedFile(null); // Clear the selected file after deletion
 
     console.log("Delete button clicked for file: ", selectedFile?.name);
   }
@@ -72,6 +100,9 @@ export default function DashboardLayout({
 
       <div className="app-body">
         <aside className="sidebar">
+          <button className="add-file-btn" onClick={handleAddFileClick} style={{visibility: files ? "visible" : "hidden"}}>
+              Add local file to Printer
+          </button>
           <h3>Printer Files</h3>
                 {files
                   .filter(file => file.type === "PRINT_FILE")
