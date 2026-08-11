@@ -94,7 +94,30 @@ export default function DashboardLayout({
         )}
 
 
-        <div style={{ flex: 1 }}>TDPrinter Desktop</div>
+        <div
+          style={{
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <img
+            src="logo.png"
+            alt="Logo"
+            style={{ width: "140px", height: "140px" }}
+          />
+
+          <p
+            style={{
+              margin: "0 0 0 30px",
+              fontSize: "1.8rem",
+              color: "#f5f1f1",
+            }}
+          >
+            3D Printer Manager
+          </p>
+        </div>
 
         <div style={{fontSize:"16px"}}>
           Status: <b>{version ? (<p>connected</p>):(<p>none</p>)  }</b>
@@ -103,7 +126,7 @@ export default function DashboardLayout({
 
       <div className="app-body">
         <aside className="sidebar">
-          <button className="add-file-btn" onClick={handleAddFileClick} style={{visibility: files ? "visible" : "hidden"}}>
+          <button className="add-file-btn" onClick={handleAddFileClick} style={{visibility: version ? "visible" : "hidden"}}>
               Add local file to Printer
           </button>
           <h3>Printer Files</h3>
@@ -184,7 +207,7 @@ export default function DashboardLayout({
 
 
         <div className="file-details" style={{ visibility: selectedFile ? "visible" : "hidden", gridColumn: "2", gridRow: "1" }}>
-            <h2>Job File Details</h2>
+            <h2>Print Job Details</h2>
             <p>Current print job information will be displayed here.</p>
         </div>        
 

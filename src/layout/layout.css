@@ -20,6 +20,13 @@
   font-weight: bold;
 }
 
+.topbar h1 {
+  margin: 0;
+  font-size: 1.8rem;
+  color: #f5f1f1;
+  word-wrap: break-word;
+}
+
 /* Body split */
 .app-body {
   flex: 1;
