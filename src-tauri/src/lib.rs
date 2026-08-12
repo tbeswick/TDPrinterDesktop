@@ -13,6 +13,7 @@ pub struct AppState {
     pub delete_filename: Arc<RwLock<Option<String>>>,
     pub print_filename: Arc<RwLock<Option<String>>>,
     pub upload_filename: Arc<RwLock<Option<String>>>,
+    pub new_print_job: RwLock<bool>,
 }
 
 
@@ -67,7 +68,8 @@ pub fn run() {
         file_list: Arc::new(RwLock::new(None)),
         delete_filename: Arc::new(RwLock::new(None)),
         print_filename: Arc::new(RwLock::new(None)),
-        upload_filename: Arc::new(RwLock::new(None))
+        upload_filename: Arc::new(RwLock::new(None)),
+        new_print_job: RwLock::new(false),
     };
 
     let background_state = Arc::new(app_state);

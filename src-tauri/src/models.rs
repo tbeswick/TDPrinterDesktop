@@ -19,8 +19,8 @@ pub enum SmState{
     Status,
     UploadFile,
      DeleteFile,
-    // NewJob,
      SendPrintJob,
+     NewJob,     
     // StopPrintJob,
     // PausePrintJob,
     // ResumePrintJob
@@ -134,4 +134,56 @@ pub struct FileRefs {
 
     #[serde(rename = "download")]
     pub download: Option<String>,
+}
+
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PrintFile {
+        #[serde(rename = "refs")]
+        pub refs: Option<FileRefs>,
+
+        #[serde(rename = "name")]
+        pub name: Option<String>,
+
+        #[serde(rename = "display_name")]
+        pub display_name: String,
+
+        #[serde(rename = "path")]
+        pub path: Option<String>,
+
+        #[serde(rename = "size")]
+        pub size: Option<i64>,
+
+        #[serde(rename = "m_timestamp")]
+        pub last_modified_timestamp: i64,
+}
+
+
+
+
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PrintJob{
+
+
+
+        #[serde(rename = "id")]
+        pub id: i32,
+
+        #[serde(rename = "state")]
+        pub state: Option<String>,
+
+        #[serde(rename = "progress")]
+        pub progress: f64,
+
+        #[serde(rename = "time_remaining")]
+        pub time_remaining: f64,
+
+        #[serde(rename = "time_printing")]
+        pub time_printing: f64,
+
+        #[serde(rename = "file")]
+        pub file: Option<PrintFile>,
+
 }

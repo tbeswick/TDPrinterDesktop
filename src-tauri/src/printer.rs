@@ -223,7 +223,7 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
 
 
         // settle delay - allows first version event to fire correctly
-        tokio::time::sleep(Duration::from_secs(5)).await;        
+        tokio::time::sleep(Duration::from_secs(3)).await;        
 
         // Start a worker to manage file thumbnails
         manage_file_thumbnails(app.clone(), app_state.clone());        
@@ -322,10 +322,6 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                             }
                         }
                         
-
-
-
-
                         SmState::Status // Transition to Status state on success
                     }                    
                 }
@@ -378,10 +374,16 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                         SmState::Files // Transition to Files state on success                     
                     }
                 }
-                SmState::Idle => {
-                    println!("Printer is idle.");
+                
+                SmState::NewJob => {
+                    let njb = app_state.new_print_job.read().await;
+                    println!("New job data requested. {}",*njb);
                     // Wait for a command or event to change state
-                    SmState::Idle
+                    SmState::Status
+                }
+                SmState::Idle => {
+                    // Wait for a command or event to change state
+                    SmState::Status
                 }
                 SmState::Status => {
                  //   println!("Fetching printer status...");
@@ -391,10 +393,23 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                         // Handle the error, maybe retry or transition to an error state
                         SmState::Connect // Retry connecting
                     } else {
-                        let status = printer_status.unwrap();
-                        println!("Printer Status: {:?}", &status);
+                        let status = printer_status.unwrap();                     
+                        println!("Printer Status: {:?}", status);
                         app.emit("printer-status-updated", &status).unwrap();
-                        SmState::Status // Transition to Status state on success
+                        let sts = status.printer.unwrap().state;
+                        let mut new_job_flag = app_state.new_print_job.write().await;
+                        println!("new_job {:?}",new_job_flag);
+                        if !*new_job_flag  &&  sts == Some("PRINTING".to_string()) {     
+                            *new_job_flag = true;
+                            println!("nj {}",new_job_flag);
+                            SmState::NewJob
+                        }else if Some("PRINTING".to_string()) != sts{
+                            // reset the new job flag whn not printing
+                            *new_job_flag = false;
+                            SmState::Status
+                        } else{
+                            SmState::Status
+                        }                       
                     }
                     
                 }

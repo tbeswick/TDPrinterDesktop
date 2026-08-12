@@ -4,7 +4,7 @@
 use std::time::Duration;
 
 use reqwest::{Client, StatusCode};
-use crate::models::{PrinterStatus,VersionInfo, PrinterInfo, FileList};
+use crate::models::{PrinterStatus,VersionInfo, PrinterInfo, FileList, PrintJob};
 
 
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
@@ -186,7 +186,6 @@ pub async fn send_print_job(ip: &str, api_key: &str, filename: &str) -> Result<S
     let res = client
         .post(&url)
         .header("X-Api-Key", api_key)
-        .timeout(LONG_CONNECT_TIMEOUT)
         .send()
         .await
         .map_err(|e| e.to_string())?;
@@ -248,4 +247,31 @@ pub async fn upload_printer_file(
 
 
 
+}
+
+
+pub async fn fetch_job_info(ip: &str, api_key: &str) -> Result<PrintJob, String> {
+    let url = format!("http://{}/api/job", ip);
+
+    let client = Client::new();
+
+    let res = client
+        .get(&url)
+        .header("X-Api-Key", api_key)
+        .timeout(LONG_CONNECT_TIMEOUT)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !res.status().is_success() {
+        println!("HTTP error: {}", res.status());
+        return Err(format!("HTTP error: {}", res.status()));
+    }
+
+    let json = res
+        .json::<PrintJob>()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    Ok(json)
 }
