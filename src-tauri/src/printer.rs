@@ -141,6 +141,14 @@ pub async fn set_delete_file(
     Ok(())
 }
 
+pub async fn set_print_file(     
+    print_filename: &mut Option<String>, filename: &str) -> Result<(), String> {           
+    println!("Print file requested for {}", filename);
+    print_filename.replace(filename.to_string());
+    println!("Print filename set to: {:?}", print_filename);
+    Ok(())
+}
+
 pub async fn set_upload_file(     
     upload_filename: &mut Option<String>, filename: &str) -> Result<(), String> {           
     println!("Upload file requested for {}", filename);
@@ -215,7 +223,7 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
 
 
         // settle delay - allows first version event to fire correctly
-        tokio::time::sleep(Duration::from_secs(2)).await;        
+        tokio::time::sleep(Duration::from_secs(5)).await;        
 
         // Start a worker to manage file thumbnails
         manage_file_thumbnails(app.clone(), app_state.clone());        
@@ -227,6 +235,11 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
             let mut delete_filename = app_state.delete_filename.write().await;
             if delete_filename.is_some() && !delete_filename.as_ref().unwrap().is_empty() {
                 state = SmState::DeleteFile;
+            }
+
+            let mut print_filename = app_state.print_filename.write().await;
+            if print_filename.is_some() && !print_filename.as_ref().unwrap().is_empty() {
+                state = SmState::SendPrintJob;
             }
 
             let mut upload_filename = app_state.upload_filename.write().await;
@@ -352,6 +365,19 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                         SmState::Files // Transition to Files state on success                     
                     }
                 }
+                SmState::SendPrintJob => {
+                    println!("Sending print job...{}", print_filename.as_ref().unwrap());
+                    let print_result = send_print_job(PRINTER_IP, APIKEY, print_filename.as_ref().unwrap()).await.map_err(|e| e.to_string());
+                    if let Err(error) = print_result {
+                        println!("Print job failed: {}", error);
+                        print_filename.replace("".to_string());// Clear the print filename after processing                               
+                        SmState::Status // Transition to Status state on error, maybe retry or transition to an error state
+                    } else {
+                        println!("Print job sent successfully: {}", print_filename.as_ref().unwrap());
+                        print_filename.replace("".to_string());// Clear the print filename after processing                           
+                        SmState::Files // Transition to Files state on success                     
+                    }
+                }
                 SmState::Idle => {
                     println!("Printer is idle.");
                     // Wait for a command or event to change state
@@ -366,6 +392,7 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                         SmState::Connect // Retry connecting
                     } else {
                         let status = printer_status.unwrap();
+                        println!("Printer Status: {:?}", &status);
                         app.emit("printer-status-updated", &status).unwrap();
                         SmState::Status // Transition to Status state on success
                     }

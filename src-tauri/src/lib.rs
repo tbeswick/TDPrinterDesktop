@@ -11,6 +11,7 @@ mod models;
 pub struct AppState {
     pub file_list: Arc<RwLock<Option<FileList>>>,
     pub delete_filename: Arc<RwLock<Option<String>>>,
+    pub print_filename: Arc<RwLock<Option<String>>>,
     pub upload_filename: Arc<RwLock<Option<String>>>,
 }
 
@@ -65,6 +66,7 @@ pub fn run() {
     let app_state = AppState {
         file_list: Arc::new(RwLock::new(None)),
         delete_filename: Arc::new(RwLock::new(None)),
+        print_filename: Arc::new(RwLock::new(None)),
         upload_filename: Arc::new(RwLock::new(None))
     };
 
@@ -83,7 +85,8 @@ pub fn run() {
             get_file_list,
             card_clicked,
             send_gcode,
-            deletebutton_clicked])
+            deletebutton_clicked,
+            printbutton_clicked])
         .run(tauri::generate_context!())
         .expect("error while running printer application");
 }
@@ -96,3 +99,13 @@ async fn deletebutton_clicked( state: tauri::State<'_, Arc<AppState>>,name: Stri
     _ =  printer::set_delete_file(&mut *state.delete_filename.write().await, &name).await;    
     Ok(())
 }
+
+
+#[tauri::command]
+async fn printbutton_clicked( state: tauri::State<'_, Arc<AppState>>,name: String) -> Result<(), String> {
+    
+    println!("Print button clicked for file: {}", name);
+    _ =  printer::set_print_file(&mut *state.print_filename.write().await, &name).await;    
+    Ok(())
+}
+

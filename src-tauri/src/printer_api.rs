@@ -178,6 +178,30 @@ pub async fn delete_print_file(ip: &str, api_key: &str, filename: &str) -> Resul
 }
 
 
+pub async fn send_print_job(ip: &str, api_key: &str, filename: &str) -> Result<StatusCode,String> {
+    let url = format!("http://{}/api/v1/files/usb/{}", ip, filename);
+
+    let client = Client::new();
+
+    let res = client
+        .post(&url)
+        .header("X-Api-Key", api_key)
+        .timeout(LONG_CONNECT_TIMEOUT)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !res.status().is_success() {
+        println!("HTTP error: {}", res.status());
+        return Err(format!("HTTP error: {}", res.status()));
+    }
+
+
+    Ok(res.status())  
+}
+
+
+
 pub async fn upload_printer_file(
     ip: &str,
     api_key: &str,

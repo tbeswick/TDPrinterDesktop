@@ -75,6 +75,12 @@ export default function DashboardLayout({
 
 
 
+  async function handlePrintButtonClick() {
+    await invoke<string>("printbutton_clicked", {
+      name: selectedFile?.name || "Unknown",
+    });
+  }
+
 
   return (
     <div className="app-shell">
@@ -191,7 +197,9 @@ export default function DashboardLayout({
                     Delete File
                 </button>
                 {/* <button className="pause-btn" style={{visibility: "hidden"}}>Pause Print</button>                 */}
-                <button className="print-btn">Print File</button>
+                <button className="print-btn" onClick={handlePrintButtonClick}>
+                    Print File
+                </button>
             </div>
 
 

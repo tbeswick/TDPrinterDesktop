@@ -20,7 +20,7 @@ pub enum SmState{
     UploadFile,
      DeleteFile,
     // NewJob,
-    // SendPrintJob,
+     SendPrintJob,
     // StopPrintJob,
     // PausePrintJob,
     // ResumePrintJob
