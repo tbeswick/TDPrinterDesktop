@@ -12,7 +12,7 @@ export function usePrinterEvents(
     setFiles: React.Dispatch<React.SetStateAction<FileItem[]>>,
     setVersion: React.Dispatch<React.SetStateAction<VersionInfo | null>>,
     setShowWarning: React.Dispatch<React.SetStateAction<boolean | null>>,
-    setJobInfo: React.Dispatch<React.SetStateAction<PrintJob> | null>
+    setJobInfo: React.Dispatch<React.SetStateAction<PrintJob | null>>
 ) {
 
     useEffect(() => {
