@@ -4,13 +4,15 @@ import { invoke } from "@tauri-apps/api/core";
 import { FileItem, FileList } from "../types/printerfile";
 import { PrinterStatus } from "../types/printerstatus";
 import { VersionInfo } from "../types/versioninfo";
+import { PrintJob } from "../types/printjobinfo";
 
 
 export function usePrinterEvents(
     setStatus: React.Dispatch<React.SetStateAction<PrinterStatus | null>>,
     setFiles: React.Dispatch<React.SetStateAction<FileItem[]>>,
     setVersion: React.Dispatch<React.SetStateAction<VersionInfo | null>>,
-    setShowWarning: React.Dispatch<React.SetStateAction<boolean | null>>
+    setShowWarning: React.Dispatch<React.SetStateAction<boolean | null>>,
+    setJobInfo: React.Dispatch<React.SetStateAction<PrintJob> | null>
 ) {
 
     useEffect(() => {
@@ -73,6 +75,25 @@ export function usePrinterEvents(
       }
     };
   }, []);  
+
+
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+
+    listen<PrintJob>("new-job-info", (event) => {
+      console.log("Received printer job info update:", event.payload);
+      setJobInfo(event.payload || null);
+    }).then((fn) => {
+      unlisten = fn;
+    });
+
+    return () => {
+      if (unlisten) {
+        unlisten();
+      }
+    };
+  }, []);    
+
 
 
 

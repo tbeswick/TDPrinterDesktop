@@ -2,6 +2,7 @@ import { ReactNode, useState } from "react";
 import { PrinterStatus } from "../types/printerstatus";
 import { VersionInfo } from "../types/versioninfo";
 import { usePrinterEvents } from "../hooks/usePrinterEvents";
+import {PrintJob} from "../types/printjobinfo"
 import { FileItem } from "../types/printerfile";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -18,8 +19,9 @@ export default function DashboardLayout({
   const [status, setStatus] = useState<PrinterStatus | null>(null);
   const [files, setFiles] = useState<FileItem[]>([]); 
   const [version, setVersion] = useState<VersionInfo | null>(null);
-   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
+  const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
   const [showWarning, setShowWarning] = useState<boolean | null>(null);
+  const [jobInfo, setJobInfo] = useState<PrintJob | null>(null);
 
 
 
@@ -27,7 +29,8 @@ export default function DashboardLayout({
          setStatus,
          setFiles,
          setVersion,
-         setShowWarning
+         setShowWarning,
+         setJobInfo
      );
 
 
@@ -182,7 +185,7 @@ export default function DashboardLayout({
        )} */}
 
 
-        {selectedFile && (
+        {selectedFile && jobInfo === null  && (
           <div className="file-details">
             <h2>Selected File Details</h2>            
             <img src={selectedFile.thumbnail_path} alt="Thumbnail" style={{width: "260px", height: "260px"}} />
@@ -207,16 +210,17 @@ export default function DashboardLayout({
         )}
 
 
-        <div className="file-details" style={{visibility: selectedFile ? "hidden" : "visible"}}>
+        <div className="file-details" style={{visibility: selectedFile  ? "hidden" : "visible"}}>
             <h2>File Details</h2>
             <p>Select a file to see details</p>
         </div>
 
 
 
-        <div className="file-details" style={{ visibility: selectedFile ? "visible" : "hidden", gridColumn: "2", gridRow: "1" }}>
+        <div className="file-details" style={{ visibility: jobInfo ? "visible" : "hidden", gridColumn: "2", gridRow: "1" }}>
             <h2>Print Job Details</h2>
-            <p>Current print job information will be displayed here.</p>
+            <p>{jobInfo?.file?.display_name}</p>
+            <img src={selectedFile?.thumbnail_path} alt="Thumbnail" style={{width: "260px", height: "260px"}} />            
         </div>        
 
         </main>

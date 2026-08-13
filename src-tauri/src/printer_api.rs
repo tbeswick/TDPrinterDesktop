@@ -251,7 +251,7 @@ pub async fn upload_printer_file(
 
 
 pub async fn fetch_job_info(ip: &str, api_key: &str) -> Result<PrintJob, String> {
-    let url = format!("http://{}/api/job", ip);
+    let url = format!("http://{}/api/v1/job", ip);
 
     let client = Client::new();
 
@@ -268,10 +268,21 @@ pub async fn fetch_job_info(ip: &str, api_key: &str) -> Result<PrintJob, String>
         return Err(format!("HTTP error: {}", res.status()));
     }
 
-    let json = res
-        .json::<PrintJob>()
-        .await
+    // print the response body    
+    let response_body = res.text().await
         .map_err(|e| e.to_string())?;
+
+   // println!("response body {}",response_body);
+
+
+    let json = serde_json::from_str::<PrintJob>(&response_body)
+        .map_err(|e| e.to_string())?;    
+
+
+    // let json = res
+    //     .json::<PrintJob>()
+    //     .await
+    //     .map_err(|e| e.to_string())?;
 
     Ok(json)
 }

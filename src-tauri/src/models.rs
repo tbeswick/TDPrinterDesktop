@@ -126,13 +126,8 @@ pub struct FileItem {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileRefs {
-    #[serde(rename = "icon")]
-    pub icon: Option<String>,
-
-    #[serde(rename = "thumbnail")]
+    pub icon: Option<String>,    
     pub thumbnail: Option<String>,
-
-    #[serde(rename = "download")]
     pub download: Option<String>,
 }
 
@@ -140,23 +135,12 @@ pub struct FileRefs {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PrintFile {
-        #[serde(rename = "refs")]
-        pub refs: Option<FileRefs>,
-
-        #[serde(rename = "name")]
-        pub name: Option<String>,
-
-        #[serde(rename = "display_name")]
-        pub display_name: String,
-
-        #[serde(rename = "path")]
-        pub path: Option<String>,
-
-        #[serde(rename = "size")]
-        pub size: Option<i64>,
-
-        #[serde(rename = "m_timestamp")]
-        pub last_modified_timestamp: i64,
+    pub refs: Option<FileRefs>,
+    pub name: Option<String>,
+    pub display_name: String,
+    pub path: Option<String>,
+    pub size: Option<i64>,
+    pub m_timestamp: i64,
 }
 
 
@@ -164,26 +148,11 @@ pub struct PrintFile {
 
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PrintJob{
-
-
-
-        #[serde(rename = "id")]
-        pub id: i32,
-
-        #[serde(rename = "state")]
-        pub state: Option<String>,
-
-        #[serde(rename = "progress")]
-        pub progress: f64,
-
-        #[serde(rename = "time_remaining")]
-        pub time_remaining: f64,
-
-        #[serde(rename = "time_printing")]
-        pub time_printing: f64,
-
-        #[serde(rename = "file")]
-        pub file: Option<PrintFile>,
-
+pub struct PrintJob{        
+    pub id: i32,        
+    pub state: Option<String>,    
+    pub progress: f64,
+    pub time_remaining: i32,        
+    pub time_printing: i32,
+    pub file: Option<PrintFile>,
 }

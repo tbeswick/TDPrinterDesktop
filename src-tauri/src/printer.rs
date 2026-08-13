@@ -376,10 +376,18 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                 }
                 
                 SmState::NewJob => {
-                    let njb = app_state.new_print_job.read().await;
-                    println!("New job data requested. {}",*njb);
-                    // Wait for a command or event to change state
-                    SmState::Status
+                    println!("Sending job info request...");
+                    let job_result = fetch_job_info(PRINTER_IP,APIKEY).await.map_err(|e| e.to_string());
+                    if job_result.is_err() {
+                        println!("Error fetching printer job info: {:?}", job_result.err());
+                        // Handle the error, maybe retry or transition to an error state
+                        SmState::Connect // Retry connecting
+                    } else {
+                        let info = job_result.unwrap();
+                        println!("Printer Job Info: {:?}", info);
+                        app.emit("new-job-info",&info).unwrap();
+                        SmState::Status // Transition to Status state on success
+                    }
                 }
                 SmState::Idle => {
                     // Wait for a command or event to change state
