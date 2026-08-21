@@ -21,6 +21,7 @@ export default function DashboardLayout({
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
   const [showWarning, setShowWarning] = useState<boolean | null>(null);
   const [jobInfo, setJobInfo] = useState<PrintJob | null>(null);
+  const [showAbout, setShowAbout] = useState<boolean | null>(null);
 
 
 
@@ -44,6 +45,11 @@ export default function DashboardLayout({
     await invoke<boolean>("stop_print_clicked", {
       jobId: jobInfo?.id || 0
     })
+  }
+
+
+  async function handleAboutClick(){
+    setShowAbout(true);
   }
 
 
@@ -94,46 +100,33 @@ export default function DashboardLayout({
 
   return (
     <div className="app-shell">
-      <header className="topbar">
+      <header className="topbar" style={{display:"flex"}}>
 
-        {version ? (
-         <div style={{fontSize:"12px", width:"140px"}}>
-           <p>API Version: {version.api}</p>
-           <p>Server Version: {version.server}</p>
-           <p>Nozzle Diameter: {version.nozzle_diameter}</p>
-           <p>Hostname: {version.hostname}</p>
-           <p>Firmware: {version.firmware}</p>
-           <p>Printer: {version.printer}</p>
-         </div>
-        ): (
-          <p style={{fontSize:"12px",width:"140px"}}></p>
-        )}
+            <div style={{flex:"1",textAlign:"left"}}>
+                <img
+                  src="logo.png"
+                  alt="Logo"
+                  style={{ width: "140px", height: "140px"  }}
+                />
+            </div>
 
 
-        <div
-          style={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <img
-            src="logo.png"
-            alt="Logo"
-            style={{ width: "140px", height: "140px" }}
-          />
+            <div style={{flex:"1"}} >
+              <p
+                style={{
+                  fontSize: "1.8rem",
+                  color: "#f5f1f1",
+                }}
+              >
+                3D Printer Manager
+              </p>
+            </div>
 
-          <p
-            style={{
-              margin: "0 0 0 30px",
-              fontSize: "1.8rem",
-              color: "#f5f1f1",
-            }}
-          >
-            3D Printer Manager
-          </p>
-        </div>
+              <div style={{flex:"1", textAlign:"right"}}>
+                <a href="#" onClick={handleAboutClick} style={{paddingRight:"30px", textDecoration:"none", fontSize:"24px", color:"#ccd5ee"}} > version info </a>
+              </div>
+
+
       </header>
 
       <div className="app-body">
@@ -183,6 +176,35 @@ export default function DashboardLayout({
                 </div>
             </div>
         )}
+
+
+        {
+          showAbout && (
+            <div className="warning-overlay">
+                <div className="warning-dialog">
+                    <h2>Version Information</h2>
+                    {version ? (
+                    <div>
+                    <p>API Version: {version?.api}</p>
+                    <p>Server Version: {version?.server}</p>
+                    <p>Nozzle Diameter: {version?.nozzle_diameter}</p>
+                    <p>Hostname: {version?.hostname}</p>
+                    <p>Firmware: {version?.firmware}</p>
+                    <p>Printer: {version?.printer}</p>                    
+                    </div>
+                     ) : (
+                      <p>Printer not connected</p>
+                     )
+                    }
+                    <button onClick={() => setShowAbout(false)}>
+                        OK
+                    </button>
+                </div>
+            </div>            
+
+          )
+        }
+
 
 
 

@@ -1,4 +1,4 @@
-use crate::models::{FileList, FileItem, SmState};
+use crate::models::{FileList, FileItem};
 use std::sync::Arc;
 use tauri::DeviceEventFilter::Always;
 use tokio::sync::RwLock;
@@ -40,7 +40,7 @@ async fn stop_print_clicked( job_id: i32)->Result<bool,String>{
     println!("stop print for jobID {:?}",job_id);
     let rsp = printer::stop_print_job(job_id).await; 
     println!("stop print response {:?}",rsp);
-    
+
     return Ok(true)
 
 }
