@@ -139,7 +139,7 @@ export default function DashboardLayout({
             .filter(file => file.type === "PRINT_FILE")
             .map(file => (
               <div key={file.display_name} className="card" onClick={() => handleCardClick(file.display_name)}>
-                <img src={file.thumbnail_path} alt="Logo" style={{ width: "40px", height: "40px" }} />
+                <img src={file.thumbnail_path} alt="Logo" style={{ width: "50px", height: "50px" }} />
                 <p>{file.display_name}</p>
                 {/* <p>{`Last Modified: ${new Date(file.m_timestamp * 1000).toLocaleString()}`}</p>       */}
               </div>
