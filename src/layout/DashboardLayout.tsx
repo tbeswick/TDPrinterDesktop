@@ -2,7 +2,7 @@ import { ReactNode, useState } from "react";
 import { PrinterStatus } from "../types/printerstatus";
 import { VersionInfo } from "../types/versioninfo";
 import { usePrinterEvents } from "../hooks/usePrinterEvents";
-import {PrintJob} from "../types/printjobinfo"
+import { PrintJob } from "../types/printjobinfo"
 import { FileItem } from "../types/printerfile";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
@@ -16,7 +16,7 @@ export default function DashboardLayout({
 }) {
 
   const [status, setStatus] = useState<PrinterStatus | null>(null);
-  const [files, setFiles] = useState<FileItem[]>([]); 
+  const [files, setFiles] = useState<FileItem[]>([]);
   const [version, setVersion] = useState<VersionInfo | null>(null);
   const [selectedFile, setSelectedFile] = useState<FileItem | null>(null);
   const [showWarning, setShowWarning] = useState<boolean | null>(null);
@@ -25,22 +25,22 @@ export default function DashboardLayout({
 
 
 
-     usePrinterEvents(
-         setStatus,
-         setFiles,
-         setVersion,
-         setShowWarning,
-         setJobInfo
-     );
+  usePrinterEvents(
+    setStatus,
+    setFiles,
+    setVersion,
+    setShowWarning,
+    setJobInfo
+  );
 
 
   async function handleCardClick(cardId: String) {
     const fileItem = await invoke<FileItem>("card_clicked", { cardId });
     setSelectedFile(fileItem);
-  }     
+  }
 
 
-  async function handleStopPrintClick(){
+  async function handleStopPrintClick() {
 
     await invoke<boolean>("stop_print_clicked", {
       jobId: jobInfo?.id || 0
@@ -48,7 +48,7 @@ export default function DashboardLayout({
   }
 
 
-  async function handleAboutClick(){
+  async function handleAboutClick() {
     setShowAbout(true);
   }
 
@@ -57,25 +57,25 @@ export default function DashboardLayout({
   async function handleAddFileClick() {
 
     const selected = await open({
-        multiple: false,
-        filters: [
-            {
-                name: "G-code files",
-                extensions: ["bgcode"],
-            },
-        ],
+      multiple: false,
+      filters: [
+        {
+          name: "G-code files",
+          extensions: ["bgcode"],
+        },
+      ],
     });
 
     if (!selected) {
-        return; // User cancelled
+      return; // User cancelled
     }
 
     const result = await invoke<string>("send_gcode", {
-        path: selected,
+      path: selected,
     });
 
     console.log(result);
-}
+  }
 
   async function handleDeleteButtonClick() {
     await invoke<string>("deletebutton_clicked", {
@@ -100,115 +100,115 @@ export default function DashboardLayout({
 
   return (
     <div className="app-shell">
-      <header className="topbar" style={{display:"flex"}}>
+      <header className="topbar" style={{ display: "flex" }}>
 
-            <div style={{flex:"1",textAlign:"left"}}>
-                <img
-                  src="logo.png"
-                  alt="Logo"
-                  style={{ width: "140px", height: "140px"  }}
-                />
-            </div>
+        <div style={{ flex: "1", textAlign: "left" }}>
+          <img
+            src="logo.png"
+            alt="Logo"
+            style={{ width: "140px", height: "140px" }}
+          />
+        </div>
 
 
-            <div style={{flex:"1"}} >
-              <p
-                style={{
-                  fontSize: "1.8rem",
-                  color: "#f5f1f1",
-                }}
-              >
-                3D Printer Manager
-              </p>
-            </div>
+        <div style={{ flex: "1" }} >
+          <p
+            style={{
+              fontSize: "1.8rem",
+              color: "#f5f1f1",
+            }}
+          >
+            3D Printer Manager
+          </p>
+        </div>
 
-              <div style={{flex:"1", textAlign:"right"}}>
-                <a href="#" onClick={handleAboutClick} style={{paddingRight:"30px", textDecoration:"none", fontSize:"24px", color:"#ccd5ee"}} > version info </a>
-              </div>
+        <div style={{ flex: "1", textAlign: "right" }}>
+          <a href="#" onClick={handleAboutClick} style={{ paddingRight: "30px", textDecoration: "none", fontSize: "18px", color: "#ccd5ee" }} >printer version</a>
+        </div>
 
 
       </header>
 
       <div className="app-body">
         <aside className="sidebar">
-          <button className="add-file-btn" onClick={handleAddFileClick} style={{visibility: version ? "visible" : "hidden"}}>
-              Add local file to Printer
+          <button className="add-file-btn" onClick={handleAddFileClick} style={{ visibility: status ? "visible" : "hidden" }}>
+            Add local file to Printer
           </button>
           <h3>Printer Files</h3>
-                {files
-                  .filter(file => file.type === "PRINT_FILE")
-                  .map(file => (                       
-                      <div key={file.display_name} className="card" onClick={() => handleCardClick(file.display_name)}>
-                        <img src={file.thumbnail_path} alt="Logo" style={{width: "40px", height: "40px"}} />                                                      
-                        <p>{file.display_name}</p>
-                        {/* <p>{`Last Modified: ${new Date(file.m_timestamp * 1000).toLocaleString()}`}</p>       */}
-                      </div>                                       
-                ))}
+          {files
+            .filter(file => file.type === "PRINT_FILE")
+            .map(file => (
+              <div key={file.display_name} className="card" onClick={() => handleCardClick(file.display_name)}>
+                <img src={file.thumbnail_path} alt="Logo" style={{ width: "40px", height: "40px" }} />
+                <p>{file.display_name}</p>
+                {/* <p>{`Last Modified: ${new Date(file.m_timestamp * 1000).toLocaleString()}`}</p>       */}
+              </div>
+            ))}
         </aside>
 
 
 
         <div className="app-content">
 
-          {status ? 
-          <div className={"printer-status " +  ((status?.printer.state === "IDLE") ? " idle-state": " busy-state")}>
-            {status.printer.state}
-          </div> : 
-          <div className={"printer-status connect-state"}>
-            waiting for connection...
-          </div>
+          {status ?
+            <div className={"printer-status " + ((status?.printer.state === "IDLE") ? " idle-state" : " busy-state")}>
+              {status.printer.state}
+            </div> :
+            <div className={"printer-status connect-state"}>
+              waiting for connection...
+            </div>
           }
 
 
-        {showWarning && (
+          {showWarning && (
             <div className="warning-overlay">
-                <div className="warning-dialog">
-                    <h2>File In Use</h2>
+              <div className="warning-dialog">
+                <h2>File In Use</h2>
 
-                    <p>
-                        This file cannot be deleted because it is currently
-                        being used by another process. Check printer status and try again later.
-                    </p>
+                <p>
+                  This file cannot be deleted because it is currently
+                  being used by another process. Check printer status and try again later.
+                </p>
 
-                    <button onClick={() => setShowWarning(false)}>
-                        OK
-                    </button>
-                </div>
+                <button onClick={() => setShowWarning(false)}>
+                  OK
+                </button>
+              </div>
             </div>
-        )}
+          )}
 
 
-        {
-          showAbout && (
-            <div className="warning-overlay">
+          {
+            showAbout && (
+              <div className="warning-overlay">
                 <div className="warning-dialog">
-                    <h2>Version Information</h2>
-                    {version ? (
+                  <h2>Version Information</h2>
+                  {version ? (
                     <div>
-                    <p>API Version: {version?.api}</p>
-                    <p>Server Version: {version?.server}</p>
-                    <p>Nozzle Diameter: {version?.nozzle_diameter}</p>
-                    <p>Hostname: {version?.hostname}</p>
-                    <p>Firmware: {version?.firmware}</p>
-                    <p>Printer: {version?.printer}</p>                    
+                      <p>API Version: {version?.api}</p>
+                      <p>Server Version: {version?.server}</p>
+                      <p>Nozzle Diameter: {version?.nozzle_diameter}</p>
+                      <p>Hostname: {version?.hostname}</p>
+                      <p>Firmware: {version?.firmware}</p>
+                      <p>Printer: {version?.printer}</p>
                     </div>
-                     ) : (
-                      <p>Printer not connected</p>
-                     )
-                    }
-                    <button onClick={() => setShowAbout(false)}>
-                        OK
-                    </button>
+                  ) : (
+                    <p>Printer not connected</p>
+                  )
+                  }
+                  <button onClick={() => setShowAbout(false)}>
+                    OK
+                  </button>
                 </div>
-            </div>            
+              </div>
 
-          )
-        }
-
-
+            )
+          }
 
 
-       {/* {status ? (
+
+
+          {/* {status ? (
          <div>
            <p>State: {status.printer.state}</p>
            <p>Nozzle: {status.printer.temp_nozzle} °C</p>
@@ -220,65 +220,65 @@ export default function DashboardLayout({
        )} */}
 
 
-              {selectedFile && (
-                <div className="warning-overlay">
-                  <div className="warning-dialog">
-                    <h2>Selected File Details</h2>      
+          {selectedFile && (
+            <div className="warning-overlay">
+              <div className="warning-dialog">
+                <h2>Selected File Details</h2>
 
-                  <button
-                    className="close-btn"
-                    onClick={() => setSelectedFile(null)}
-                    aria-label="Close"
-                  >
-                    ×
+                <button
+                  className="close-btn"
+                  onClick={() => setSelectedFile(null)}
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+
+                <img src={selectedFile.thumbnail_path} alt="Thumbnail" style={{ width: "260px", height: "260px" }} />
+                <p>{selectedFile.display_name}</p>
+                <p>Type: {selectedFile.type}</p>
+                <p>Last Modified: {new Date(selectedFile.m_timestamp * 1000).toLocaleString()}</p>
+                <p>System name: {selectedFile.name}</p>
+
+
+                <div className="button-row">
+                  <button className="delete-btn" onClick={handleDeleteButtonClick}>
+                    Delete File
                   </button>
-
-                    <img src={selectedFile.thumbnail_path} alt="Thumbnail" style={{width: "260px", height: "260px"}} />
-                    <p>{selectedFile.display_name}</p>            
-                    <p>Type: {selectedFile.type}</p>
-                    <p>Last Modified: {new Date(selectedFile.m_timestamp * 1000).toLocaleString()}</p>
-                    <p>System name: {selectedFile.name}</p>
-
-
-                    <div className="button-row">
-                        <button className="delete-btn" onClick={handleDeleteButtonClick}>
-                            Delete File
-                        </button>
-                        {/* <button className="pause-btn" style={{visibility: "hidden"}}>Pause Print</button>                 */}
-                        <button className="print-btn" onClick={handlePrintButtonClick} style={{visibility: jobInfo?"hidden":"visible"}}>
-                            Print File
-                        </button>
-                    </div>
-                  </div>
+                  {/* <button className="pause-btn" style={{visibility: "hidden"}}>Pause Print</button>                 */}
+                  <button className="print-btn" onClick={handlePrintButtonClick} style={{ visibility: jobInfo ? "hidden" : "visible" }}>
+                    Print File
+                  </button>
                 </div>
-              )}
+              </div>
+            </div>
+          )}
 
-              {jobInfo && (
-                  <div style={{display:"grid",  gridTemplateColumns: "440px 1fr"}} >
-                      <div style={{paddingTop:"50px", textAlign:"left", paddingLeft:"16px", gridColumn:"1"}} >
-                        <img src={jobInfo?.file?.refs?.thumbnail} alt="Thumbnail" style={{width: "300px", height: "300px", paddingLeft:"45px"}}/> 
-                        <p style={{color:"black", fontSize:"16px"}}>{jobInfo?.file?.display_name}</p>
-                        <p>{jobInfo?.file?.m_timestamp}</p>                                                                  
-                      </div>         
-                      <div style={{gridColumn:"2", gridRow:"1", paddingTop:"35px"}}>
-                        <div className="button-row" style={{width:"400px"}}>
-                          <button className="stop-btn" onClick={() => handleStopPrintClick()}>
-                            Stop
-                          </button>
-                          <button className="pause-btn">
-                            Pause
-                          </button>      
-                          <button className="resume-btn" style={{display:"none"}}>
-                            Resume
-                          </button>                                       
-                        </div>                            
-                      </div>
-                  </div>                  
-              )
-              }
- 
+          {jobInfo && (
+            <div style={{ display: "grid", gridTemplateColumns: "440px 1fr" }} >
+              <div style={{ paddingTop: "50px", textAlign: "left", paddingLeft: "16px", gridColumn: "1" }} >
+                <img src={jobInfo?.file?.refs?.thumbnail} alt="Thumbnail" style={{ width: "300px", height: "300px", paddingLeft: "45px" }} />
+                <p style={{ color: "black", fontSize: "16px" }}>{jobInfo?.file?.display_name}</p>
+                <p>{jobInfo?.file?.m_timestamp}</p>
+              </div>
+              <div style={{ gridColumn: "2", gridRow: "1", paddingTop: "35px" }}>
+                <div className="button-row" style={{ width: "400px" }}>
+                  <button className="stop-btn" onClick={() => handleStopPrintClick()}>
+                    Stop
+                  </button>
+                  <button className="pause-btn">
+                    Pause
+                  </button>
+                  <button className="resume-btn" style={{ display: "none" }}>
+                    Resume
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
+          }
 
-          
+
+
         </div>
 
 
