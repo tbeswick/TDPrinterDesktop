@@ -135,7 +135,7 @@ pub struct FileRefs {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PrintFile {
-    pub refs: Option<FileRefs>,
+    pub refs: FileRefs,
     pub name: Option<String>,
     pub display_name: String,
     pub path: Option<String>,
@@ -154,5 +154,5 @@ pub struct PrintJob{
     pub progress: f64,
     pub time_remaining: i32,        
     pub time_printing: i32,
-    pub file: Option<PrintFile>,
+    pub file: PrintFile,
 }

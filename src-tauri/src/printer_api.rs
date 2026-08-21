@@ -279,10 +279,28 @@ pub async fn fetch_job_info(ip: &str, api_key: &str) -> Result<PrintJob, String>
         .map_err(|e| e.to_string())?;    
 
 
-    // let json = res
-    //     .json::<PrintJob>()
-    //     .await
-    //     .map_err(|e| e.to_string())?;
-
     Ok(json)
+}
+
+
+pub async fn stop_print_job(ip: &str, api_key: &str, id:i32) -> Result<(), String> {
+
+    let url = format!("http://{}/api/v1/job/{}", ip, id);
+    let client = Client::new();
+
+    let res = client
+        .delete(&url)
+        .header("X-Api-Key", api_key)
+        .timeout(LONG_CONNECT_TIMEOUT)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !res.status().is_success() {
+        println!("HTTP error: {}", res.status());
+        return Err(format!("HTTP error: {}", res.status()));
+    }
+
+
+    Ok(())
 }

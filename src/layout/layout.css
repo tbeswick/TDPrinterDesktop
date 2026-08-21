@@ -46,16 +46,26 @@
 }
 
 
-
 /* Main content */
 .app-content {
   padding: 16px;
-  background: #4d0303;
-  overflow: auto;
-  display: grid;
-  grid-template-columns: 460px 1fr;
-  grid-template-rows: auto;  
+  background-color: #f0eae4;
+  grid-auto-columns: 330px;
 }
+
+
+.printer-status{
+  padding: 0;
+  margin:-16px; 
+  background-color: red;
+  color:rgb(240, 231, 231);
+  font-size: 18px;
+  font-weight: bold;
+  height: 55px;
+  line-height: 55px;
+
+}
+
 
 .card {
   /* Add shadows to create the "card" effect */
@@ -94,28 +104,7 @@
   font-size: small;
 }*/
 
-.file-details {
-    background-color: #1e1e1e;
-    border: 1px solid #eceaea;
-    border-radius: 15px;
-    padding: 1rem;
-    grid-column: 1;      
-    grid-row: 1;   
-    text-align: center;
-    height: 480px;
-     width: 360px; 
-}
 
-.file-details h2 {
-  color: #f5f1f1;
-  word-wrap: break-word;
-  font-size: 1.25rem;
-}
-
-.file-details p {
-  color: #e79090;
-  word-wrap: break-word;
-}
 
 .button-row {
     display: flex;
@@ -150,6 +139,18 @@
     background-color: #007bff;
 }
 
+.stop-btn {
+    background-color: #d12f4a;
+}
+
+.resume-btn {
+    background-color: #c6c917;
+    display:none
+}
+
+
+
+
 .add-file-btn {
     background-color: #ff9100;
 }
@@ -165,6 +166,7 @@
 }
 
 .warning-dialog {
+    position: relative;
     width: 400px;
     padding: 1.5rem;
     background: white;
@@ -177,3 +179,56 @@
     margin-top: 1rem;
     padding: 0.5rem 1.5rem;
 }
+
+
+.close-btn {
+    position: absolute;
+    top: -8px;
+    right: 5px;
+
+    width: 32px;
+    height: 32px;
+
+    margin: 0;
+    padding: 0;
+
+    border: none;
+    background: gray;
+    color: #eee4e4;
+
+    font-size: 28px;
+    line-height: 12px;
+    cursor: pointer;
+
+}
+
+.close-btn:hover {
+    color: #d00;
+}
+
+
+.connect-state{
+  background-color: #dc3545;
+  color:#e6e6e6;
+}
+.idle-state{
+  background-color: #11882d;
+  columns: black;
+}
+.busy-state{
+  background-color: #ff9100;
+  color:white;
+}
+
+
+
+/* .job-details{
+  text-align: start;
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.job-details p{
+  color: #1e1e1e;
+
+} */

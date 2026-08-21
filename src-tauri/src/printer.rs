@@ -1,5 +1,5 @@
 
-use crate::{AppState, printer_api::*};
+use crate::{AppState, printer_api::{self, *}};
 use crate::models::{PrinterStatus,FileList,FileItem,VersionInfo,ThumbnailState}; 
 use std::time::Duration;
 use tauri::Emitter;
@@ -156,6 +156,20 @@ pub async fn set_upload_file(
     println!("Upload filename set to: {:?}", upload_filename);
     Ok(())
 }   
+
+
+pub async fn stop_print_job(job_id:i32) -> bool{
+
+
+    let stop_response = printer_api::stop_print_job(PRINTER_IP, APIKEY, job_id).await.map_err(|e| e.to_string());
+    if stop_response.is_err(){
+        println!("stop_print_job error {:?}",stop_response.err());
+        return false;
+    }else{
+        return true;
+    }
+
+}
 
 
 
@@ -383,7 +397,9 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                         // Handle the error, maybe retry or transition to an error state
                         SmState::Connect // Retry connecting
                     } else {
-                        let info = job_result.unwrap();
+                        let mut info = job_result.unwrap();
+                        // set the thumbnail name
+                        info.file.refs.thumbnail =  Some(format!("{}/{}.png", IMAGE_CACHE_DIR, info.file.display_name));                        
                         println!("Printer Job Info: {:?}", info);
                         app.emit("new-job-info",&info).unwrap();
                         SmState::Status // Transition to Status state on success

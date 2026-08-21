@@ -1,5 +1,6 @@
 use crate::models::{FileList, FileItem, SmState};
 use std::sync::Arc;
+use tauri::DeviceEventFilter::Always;
 use tokio::sync::RwLock;
 mod printer;
 mod printer_api;
@@ -32,6 +33,18 @@ async fn card_clicked(state: tauri::State<'_, Arc<AppState>>,  card_id: String) 
         Err("File not found".into())
     }
 }
+
+#[tauri::command]
+async fn stop_print_clicked( job_id: i32)->Result<bool,String>{
+
+    println!("stop print for jobID {:?}",job_id);
+    let rsp = printer::stop_print_job(job_id).await; 
+    println!("stop print response {:?}",rsp);
+    
+    return Ok(true)
+
+}
+
 
 
 #[tauri::command]
@@ -88,6 +101,7 @@ pub fn run() {
             card_clicked,
             send_gcode,
             deletebutton_clicked,
+            stop_print_clicked,
             printbutton_clicked])
         .run(tauri::generate_context!())
         .expect("error while running printer application");
