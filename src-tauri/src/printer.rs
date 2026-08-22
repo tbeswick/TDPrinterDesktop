@@ -1,6 +1,6 @@
 
 use crate::{AppState, printer_api::{self, *}};
-use crate::models::{PrinterStatus,FileList,FileItem,VersionInfo,ThumbnailState}; 
+use crate::models::{FileList,FileItem,ThumbnailState}; 
 use std::time::Duration;
 use tauri::Emitter;
 use std::sync::Arc;

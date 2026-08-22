@@ -31,7 +31,7 @@ pub enum SmState{
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PrinterStatus {
     pub printer: Option<PrinterTelemetry>,
-    pub job: Option<JobInfo>,
+    pub job: Option<JobStatus>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -55,6 +55,15 @@ pub struct JobInfo {
     pub time_remaining: Option<u64>,
     pub file: Option<String>,
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct JobStatus {
+    pub id: Option<u64>,
+    pub progress: Option<f64>,
+    pub time_remaining: Option<u64>,
+    pub time_printing: Option<u64>,
+}
+
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CapInfo{

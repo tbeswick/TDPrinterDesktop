@@ -5,6 +5,7 @@ import { FileItem, FileList } from "../types/printerfile";
 import { PrinterStatus } from "../types/printerstatus";
 import { VersionInfo } from "../types/versioninfo";
 import { PrintJob } from "../types/printjobinfo";
+import { TemperatureReading } from "../types/temperature";
 
 
 export function usePrinterEvents(
@@ -12,7 +13,9 @@ export function usePrinterEvents(
     setFiles: React.Dispatch<React.SetStateAction<FileItem[]>>,
     setVersion: React.Dispatch<React.SetStateAction<VersionInfo | null>>,
     setShowWarning: React.Dispatch<React.SetStateAction<boolean | null>>,
-    setJobInfo: React.Dispatch<React.SetStateAction<PrintJob | null>>
+    setJobInfo: React.Dispatch<React.SetStateAction<PrintJob | null>>,
+    setTemperatureReadings: React.Dispatch<React.SetStateAction<TemperatureReading[]>
+>    
 ) {
 
     useEffect(() => {
@@ -63,8 +66,33 @@ export function usePrinterEvents(
     let unlisten: (() => void) | undefined;
 
     listen<PrinterStatus>("printer-status-updated", (event) => {
-      console.log("Received printer status update:", event.payload.printer);
-      setStatus(event.payload || null);
+        console.log(
+          "Received printer status update:",
+          event.payload.printer
+        );
+
+        // Keep your existing status state
+        setStatus(event.payload || null);
+
+        // Extract printer temperature data
+        const printer = event.payload.printer;
+
+        const temperatureReading: TemperatureReading = {
+          timestamp: Date.now(),
+
+          bedTarget: printer.target_bed ?? 0,
+          bedTemp: printer.temp_bed ?? 0,
+
+          nozzleTarget: printer.target_nozzle ?? 0,
+          nozzleTemp: printer.temp_nozzle ?? 0,
+        };
+
+        // Add the new reading to the history.
+        // Keep the most recent 150 readings.
+        setTemperatureReadings((previous) => [
+          ...previous,
+          temperatureReading,
+        ].slice(-150));
     }).then((fn) => {
       unlisten = fn;
     });

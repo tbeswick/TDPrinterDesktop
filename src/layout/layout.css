@@ -51,6 +51,8 @@
   padding: 16px;
   background-color: #f0eae4;
   grid-auto-columns: 330px;
+    overflow-y: auto;
+    overflow-x: hidden;  
 }
 
 
@@ -137,11 +139,11 @@
 }
 
 .pause-btn {
-    background-color: #007bff;
+    background-color: #7abafd;
 }
 
 .stop-btn {
-    background-color: #d12f4a;
+    background-color: #f796a6;
 }
 
 .resume-btn {

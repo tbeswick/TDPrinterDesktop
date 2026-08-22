@@ -6,6 +6,8 @@ import { PrintJob } from "../types/printjobinfo"
 import { FileItem } from "../types/printerfile";
 import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
+import { TemperatureReading } from "../types/temperature";
+import TempertureChart from "../components/TemperatureChart"
 import "./layout.css";
 
 
@@ -22,6 +24,7 @@ export default function DashboardLayout({
   const [showWarning, setShowWarning] = useState<boolean | null>(null);
   const [jobInfo, setJobInfo] = useState<PrintJob | null>(null);
   const [showAbout, setShowAbout] = useState<boolean | null>(null);
+  const [temperatureReadings, setTemperatureReadings] = useState<TemperatureReading[]>([]);  
 
 
 
@@ -30,7 +33,8 @@ export default function DashboardLayout({
     setFiles,
     setVersion,
     setShowWarning,
-    setJobInfo
+    setJobInfo,
+    setTemperatureReadings
   );
 
 
@@ -151,14 +155,13 @@ export default function DashboardLayout({
         <div className="app-content">
 
           {status ?
-            <div className={"printer-status " + ((status?.printer.state === "IDLE") ? " idle-state" : " busy-state")}>
+            (<div className={"printer-status " + ((status?.printer.state === "IDLE") ? " idle-state" : " busy-state")}>
               {status.printer.state}
-            </div> :
-            <div className={"printer-status connect-state"}>
+            </div> ) :
+            (<div className={"printer-status connect-state"}>
               waiting for connection...
-            </div>
+            </div>)
           }
-
 
           {showWarning && (
             <div className="warning-overlay">
@@ -253,11 +256,11 @@ export default function DashboardLayout({
             </div>
           )}
 
-          {jobInfo && (
+          {jobInfo ? (
             <div style={{ display: "grid", gridTemplateColumns: "440px 1fr" }} >
               <div style={{ paddingTop: "50px", textAlign: "left", paddingLeft: "16px", gridColumn: "1" }} >
                 <img src={jobInfo?.file?.refs?.thumbnail} alt="Thumbnail" style={{ width: "300px", height: "300px", paddingLeft: "45px" }} />
-                <p style={{ color: "black", fontSize: "16px" }}>{jobInfo?.file?.display_name}</p>
+                <p style={{ color: "black", fontSize: "16px" , paddingLeft:"45px"}}>{jobInfo?.file?.display_name}</p>
                 <p>{jobInfo?.file?.m_timestamp}</p>
               </div>
               <div style={{ gridColumn: "2", gridRow: "1", paddingTop: "35px" }}>
@@ -270,12 +273,28 @@ export default function DashboardLayout({
                   </button>
                   <button className="resume-btn" style={{ display: "none" }}>
                     Resume
-                  </button>
+                  </button>            
                 </div>
               </div>
+
+             {
+              (status && status.job) && 
+              <div style={{gridColumn:"2", gridRow:"2"}} >                                  
+                  <progress value={status?.job.progress} /> 
+                  <p style={{color:"black"}}>{status?.job.time_remaining}</p>
+               </div>                   
+              }
             </div>
-          )
+          ) : (<div style={{height:"380px", width:"100%"}} ></div>)
           }
+
+
+          {
+            status ? (<TempertureChart readings={temperatureReadings} />) : (<p></p>)
+          }
+
+
+
 
 
 
