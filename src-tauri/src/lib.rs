@@ -1,4 +1,4 @@
-use crate::models::{FileList, FileItem};
+use crate::models::{FileList, FileItem, SmRequest};
 use std::sync::Arc;
 use tokio::sync::{Notify, RwLock};
 mod printer;
@@ -15,6 +15,7 @@ pub struct AppState {
     pub upload_filename: Arc<RwLock<Option<String>>>,
     pub new_print_job: RwLock<bool>,
     pub ui_ready: Arc<Notify>,    
+    pub sm_request: Arc<RwLock<SmRequest>>
 }
 
 
@@ -81,6 +82,12 @@ async fn ui_ready(
 
     state.ui_ready.notify_one();
 
+    // write to state variable to signal the already running State Machine to restart
+    let mut sm_req = state.sm_request.write().await;    
+    *sm_req = SmRequest::Restart;
+
+
+
     Ok(())
 }
 
@@ -96,7 +103,8 @@ pub fn run() {
         print_filename: Arc::new(RwLock::new(None)),
         upload_filename: Arc::new(RwLock::new(None)),
         new_print_job: RwLock::new(false),    
-        ui_ready: Arc::new(tokio::sync::Notify::new()),            
+        ui_ready: Arc::new(tokio::sync::Notify::new()),       
+        sm_request: Arc::new(RwLock::new(SmRequest::Continue))
     };
 
     let background_state = Arc::new(app_state);

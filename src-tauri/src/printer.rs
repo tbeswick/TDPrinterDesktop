@@ -1,5 +1,5 @@
 
-use crate::{AppState, printer_api::{self, *}};
+use crate::{AppState, models::SmRequest, printer_api::{self, *}};
 use crate::models::{FileList,FileItem,ThumbnailState}; 
 use std::time::Duration;
 use tauri::Emitter;
@@ -249,23 +249,33 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
 
         loop {
 
+
             // check for delete file request
             let mut delete_filename = app_state.delete_filename.write().await;
             if delete_filename.is_some() && !delete_filename.as_ref().unwrap().is_empty() {
                 state = SmState::DeleteFile;
             }
 
+            // a new print file request has been set
             let mut print_filename = app_state.print_filename.write().await;
             if print_filename.is_some() && !print_filename.as_ref().unwrap().is_empty() {
                 state = SmState::SendPrintJob;
             }
 
+            // a new upload file request has been set
             let mut upload_filename = app_state.upload_filename.write().await;
             if upload_filename.is_some() && !upload_filename.as_ref().unwrap().is_empty() {
                 state = SmState::UploadFile;
             }
 
 
+            // check for State Machine reset request
+            let mut state_req = app_state.sm_request.write().await;
+            if *state_req == SmRequest::Restart {
+                state = SmState::Connect;
+                // reset the request
+                *state_req = SmRequest::Continue;
+            }
 
             state  = match state {
                 SmState::Connect => {

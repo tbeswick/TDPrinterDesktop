@@ -27,6 +27,15 @@ pub enum SmState{
 }
 
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SmRequest{
+    Continue,
+    Idle,
+    Restart,
+}
+
+
+
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PrinterStatus {
