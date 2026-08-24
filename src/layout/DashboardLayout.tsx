@@ -1,4 +1,5 @@
 import { ReactNode, useState } from "react";
+import { useEffect } from "react";
 import { PrinterStatus } from "../types/printerstatus";
 import { VersionInfo } from "../types/versioninfo";
 import { usePrinterEvents } from "../hooks/usePrinterEvents";
@@ -38,6 +39,32 @@ export default function DashboardLayout({
   );
 
 
+    useEffect(() => {
+
+      async function notifyBackendReady() {
+        try {
+
+          await invoke("ui_ready");
+
+          console.log("Backend notified: UI is ready");
+
+        } catch (error) {
+
+          console.error(
+            "Failed to notify backend that UI is ready:",
+            error
+          );
+
+        }
+      }
+
+      notifyBackendReady();
+
+    }, []);  
+
+
+
+
   async function handleCardClick(cardId: String) {
     const fileItem = await invoke<FileItem>("card_clicked", { cardId });
     setSelectedFile(fileItem);
@@ -49,6 +76,7 @@ export default function DashboardLayout({
     await invoke<boolean>("stop_print_clicked", {
       jobId: jobInfo?.id || 0
     })
+    setJobInfo(null);
   }
 
 

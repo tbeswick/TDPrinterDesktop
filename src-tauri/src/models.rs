@@ -38,6 +38,7 @@ pub struct PrinterStatus {
 pub struct PrinterTelemetry {
     pub state: Option<String>,
     pub temp_bed: Option<f64>,
+    pub target_bed: Option<f64>,
     pub temp_nozzle: Option<f64>,
     pub target_nozzle: Option<f64>,
     pub axis_z: Option<f64>,

@@ -1,7 +1,6 @@
 use crate::models::{FileList, FileItem};
 use std::sync::Arc;
-use tauri::DeviceEventFilter::Always;
-use tokio::sync::RwLock;
+use tokio::sync::{Notify, RwLock};
 mod printer;
 mod printer_api;
 mod models;
@@ -15,6 +14,7 @@ pub struct AppState {
     pub print_filename: Arc<RwLock<Option<String>>>,
     pub upload_filename: Arc<RwLock<Option<String>>>,
     pub new_print_job: RwLock<bool>,
+    pub ui_ready: Arc<Notify>,    
 }
 
 
@@ -72,6 +72,19 @@ async fn send_gcode(state: tauri::State<'_, Arc<AppState>>,path: String) -> Resu
 }
 
 
+#[tauri::command]
+async fn ui_ready(
+    state: tauri::State<'_, Arc<AppState>>,
+) -> Result<(), String> {
+
+    println!("React UI is ready - starting printer backend");
+
+    state.ui_ready.notify_one();
+
+    Ok(())
+}
+
+
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -82,7 +95,8 @@ pub fn run() {
         delete_filename: Arc::new(RwLock::new(None)),
         print_filename: Arc::new(RwLock::new(None)),
         upload_filename: Arc::new(RwLock::new(None)),
-        new_print_job: RwLock::new(false),
+        new_print_job: RwLock::new(false),    
+        ui_ready: Arc::new(tokio::sync::Notify::new()),            
     };
 
     let background_state = Arc::new(app_state);
@@ -102,7 +116,9 @@ pub fn run() {
             send_gcode,
             deletebutton_clicked,
             stop_print_clicked,
-            printbutton_clicked])
+            printbutton_clicked,
+            ui_ready
+            ])
         .run(tauri::generate_context!())
         .expect("error while running printer application");
 }

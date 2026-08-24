@@ -39,11 +39,11 @@ const TemperatureChart: React.FC<TemperatureChartProps> = ({
           }}
         >
           <CartesianGrid strokeDasharray="3 3" />
-
           <XAxis
             dataKey="timestamp"
             tickFormatter={(value) =>
               new Date(value).toLocaleTimeString([], {
+                hour: "2-digit",
                 minute: "2-digit",
                 second: "2-digit",
               })
@@ -55,15 +55,15 @@ const TemperatureChart: React.FC<TemperatureChartProps> = ({
             domain={[0, 300]}
           />
 
-          {/* <Tooltip
-            labelFormatter={(value) =>
-              new Date(value).toLocaleTimeString()
+          { <Tooltip
+            labelFormatter={() =>
+              new Date().toLocaleTimeString()
             }
             formatter={(value, name) => [
               `${Number(value).toFixed(1)} °C`,
               name,
             ]}
-          /> */}
+          /> }
 
           <Legend />
 

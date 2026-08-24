@@ -228,6 +228,11 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
 
         let mut state = SmState::Connect;
 
+
+        // Wait until React tells us that it is ready.
+        app_state.ui_ready.notified().await;        
+
+
         // Create the image cache directory if it doesn't exist
         if !std::path::Path::new(IMAGE_CACHE_DIR).exists() {
             if let Err(e) = fs::create_dir_all(IMAGE_CACHE_DIR) {
@@ -236,8 +241,7 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
         }
 
 
-        // settle delay - allows first version event to fire correctly
-        tokio::time::sleep(Duration::from_secs(3)).await;        
+
 
         // Start a worker to manage file thumbnails
         manage_file_thumbnails(app.clone(), app_state.clone());        
