@@ -24,7 +24,10 @@ export interface PrinterStatus  {
   job: {
     id?:number;
     progress?: number;
+    progress_abs?:number;
     time_remaining?: number;
+    time_remaining_str?:string,
     time_printing?:number
+    time_print_string?: string
   };
 };

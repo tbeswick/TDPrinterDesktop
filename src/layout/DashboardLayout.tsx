@@ -76,7 +76,7 @@ export default function DashboardLayout({
     await invoke<boolean>("stop_print_clicked", {
       jobId: jobInfo?.id || 0
     })
-    setJobInfo(null);
+  //  setJobInfo(null);
   }
 
 
@@ -237,20 +237,6 @@ export default function DashboardLayout({
           }
 
 
-
-
-          {/* {status ? (
-         <div>
-           <p>State: {status.printer.state}</p>
-           <p>Nozzle: {status.printer.temp_nozzle} °C</p>
-           <p>Bed: {status.printer.bed_temp} °C</p>
-           <p>Progress: {status.printer.progress}%</p>
-         </div>
-       ) : (
-         <p>Waiting for printer...</p>
-       )} */}
-
-
           {selectedFile && (
             <div className="warning-overlay">
               <div className="warning-dialog">
@@ -284,6 +270,8 @@ export default function DashboardLayout({
             </div>
           )}
 
+
+
           {jobInfo ? (
             <div style={{ display: "grid", gridTemplateColumns: "440px 1fr" }} >
               <div style={{ paddingTop: "50px", textAlign: "left", paddingLeft: "16px", gridColumn: "1" }} >
@@ -291,8 +279,8 @@ export default function DashboardLayout({
                 <p style={{ color: "black", fontSize: "16px" , paddingLeft:"45px"}}>{jobInfo?.file?.display_name}</p>
                 <p>{jobInfo?.file?.m_timestamp}</p>
               </div>
-              <div style={{ gridColumn: "2", gridRow: "1", paddingTop: "35px" }}>
-                <div className="button-row" style={{ width: "400px" }}>
+              <div style={{ gridColumn: "2", gridRow: "1", paddingTop: "35px", display: "grid" }}>
+                <div className="button-row" style={{ width: "400px", height:"60px", gridRow:"1" }}>
                   <button className="stop-btn" onClick={() => handleStopPrintClick()}>
                     Stop
                   </button>
@@ -303,15 +291,19 @@ export default function DashboardLayout({
                     Resume
                   </button>            
                 </div>
+                {
+                  (status && status.job) && 
+                    <div className="job-progress" style={{gridRow:"2", gridColumn:"1", textAlign:"left", paddingLeft:"15px"}} >
+                      <p>Print progress</p>
+                      <progress value={status?.job.progress_abs} style={{height:"54px"}} /> 
+                      <p>Progress: {status?.job.progress}%</p>
+                      <p>Time printing: {status?.job.time_print_string}</p>                                            
+                      <p>Time remaining: {status?.job.time_remaining_str}</p>
+                    </div>                
+                  }                
               </div>
 
-             {
-              (status && status.job) && 
-              <div style={{gridColumn:"2", gridRow:"2"}} >                                  
-                  <progress value={status?.job.progress} /> 
-                  <p style={{color:"black"}}>{status?.job.time_remaining}</p>
-               </div>                   
-              }
+
             </div>
           ) : (<div style={{height:"380px", width:"100%"}} ></div>)
           }

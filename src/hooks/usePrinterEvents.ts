@@ -6,6 +6,7 @@ import { PrinterStatus } from "../types/printerstatus";
 import { VersionInfo } from "../types/versioninfo";
 import { PrintJob } from "../types/printjobinfo";
 import { TemperatureReading } from "../types/temperature";
+import { format } from "../components/stringUtils"
 
 
 export function usePrinterEvents(
@@ -76,6 +77,22 @@ export function usePrinterEvents(
 
         // Extract printer temperature data
         const printer = event.payload.printer;
+
+        var job = event.payload.job;
+        // format the time strings for display here
+        if(job != undefined){
+          if(job.time_remaining != undefined){
+            job.time_remaining_str= format(" {0} mins", parseInt((job.time_remaining/60).toFixed(2)))
+          }
+          if(job.time_printing != undefined){
+            var str = format(" {0} min {1} secs",  (job.time_printing/60).toFixed(0), job.time_printing % 60);
+            job.time_print_string =   str;
+          }
+          if(job.progress != undefined){
+            job.progress_abs = parseFloat((job.progress/100).toFixed(2))
+            console.log("prg {}, prg1 {}",job.progress,job.progress_abs)
+          }
+        }
 
         const temperatureReading: TemperatureReading = {
           timestamp: Date.now(),
