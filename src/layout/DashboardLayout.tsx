@@ -76,7 +76,7 @@ export default function DashboardLayout({
     await invoke<boolean>("stop_print_clicked", {
       jobId: jobInfo?.id || 0
     })
-  //  setJobInfo(null);
+    setJobInfo(null);
   }
 
 
@@ -296,9 +296,9 @@ export default function DashboardLayout({
                     <div className="job-progress" style={{gridRow:"2", gridColumn:"1", textAlign:"left", paddingLeft:"15px"}} >
                       <p>Print progress</p>
                       <progress value={status?.job.progress_abs} style={{height:"54px"}} /> 
-                      <p>Progress: {status?.job.progress}%</p>
-                      <p>Time printing: {status?.job.time_print_string}</p>                                            
-                      <p>Time remaining: {status?.job.time_remaining_str}</p>
+                      <p>Print progress: {status?.job.progress}%</p>
+                      <p>Job time elasped: {status?.job.time_print_string}</p>                                            
+                      <p>Print time remaining: {status?.job.time_remaining_str}</p>
                     </div>                
                   }                
               </div>

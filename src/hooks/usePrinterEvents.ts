@@ -96,11 +96,10 @@ export function usePrinterEvents(
 
         const temperatureReading: TemperatureReading = {
           timestamp: Date.now(),
-
-          bedTarget: printer.target_bed ?? 0,
+          // set traget to temp levels if target has not been set (0) for cleaner graph
+          bedTarget:printer.target_bed === 0 ? printer.temp_bed ?? 0 : printer.target_bed ?? 0,
           bedTemp: printer.temp_bed ?? 0,
-
-          nozzleTarget: printer.target_nozzle ?? 0,
+          nozzleTarget: printer.target_nozzle === 0 ? printer.temp_nozzle ?? 0: printer.target_nozzle ?? 0,
           nozzleTemp: printer.temp_nozzle ?? 0,
         };
 
