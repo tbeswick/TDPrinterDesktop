@@ -7,11 +7,11 @@ use std::sync::Arc;
 use std::fs;
 use crate::models::{SmState};
 use crate::settings;
+use tauri::AppHandle;
 
 
 
-const PRINTER_IP:&str = "192.168.1.76";
-const APIKEY:&str = "kpiTr8FC6WmrsJh";
+
 const IMAGE_CACHE_DIR:&str = "../image_cache";
 
 
@@ -160,10 +160,16 @@ pub async fn set_upload_file(
 }   
 
 
-pub async fn stop_print_job(job_id:i32) -> bool{
+pub async fn stop_print_job(app: AppHandle,job_id:i32) -> bool{
 
 
-    let stop_response = printer_api::stop_print_job(PRINTER_IP, APIKEY, job_id).await.map_err(|e| e.to_string());
+    let printer_url =
+        settings::get_api_url(&app.clone()).unwrap_or_else(|_| "".to_string());
+    let printer_key =
+        settings::get_api_password().unwrap_or_else(|_| "".to_string());
+
+
+    let stop_response = printer_api::stop_print_job(&printer_url, &printer_key, job_id).await.map_err(|e| e.to_string());
     if stop_response.is_err(){
         println!("stop_print_job error {:?}",stop_response.err());
         return false;
@@ -193,8 +199,14 @@ pub fn manage_file_thumbnails(
                     file.display_name
                 );
 
+
+                let printer_url =
+                    settings::get_api_url(&app.clone()).unwrap_or_else(|_| "".to_string());
+                let printer_key =
+                    settings::get_api_password().unwrap_or_else(|_| "".to_string());                
+
                 let image =
-                    download_thumbnail(&file,PRINTER_IP,APIKEY).await;
+                    download_thumbnail(&file,&printer_url,&printer_key).await;
 
                 update_thumbnail(
                     &app,
@@ -252,16 +264,10 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
         loop {
 
 
-            let api_url =
-                settings::get_api_url(&app.clone());
-
-            let password =
-                settings::get_api_password();
-            let printer_url = api_url.unwrap_or_else(|_| "".to_string());
-            let printer_key = password.unwrap_or_else(|_| "".to_string());
-
-            println!("api url: {:?} password: {:?}", printer_url, printer_key); 
-
+            let printer_url =
+                settings::get_api_url(&app.clone()).unwrap_or_else(|_| "".to_string());
+            let printer_key =
+                settings::get_api_password().unwrap_or_else(|_| "".to_string());
 
 
             // check for delete file request

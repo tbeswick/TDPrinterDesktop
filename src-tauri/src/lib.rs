@@ -41,9 +41,9 @@ async fn card_clicked(
 }
 
 #[tauri::command]
-async fn stop_print_clicked(job_id: i32) -> Result<bool, String> {
+async fn stop_print_clicked( app: tauri::AppHandle, job_id: i32) -> Result<bool, String> {
     println!("stop print for jobID {:?}", job_id);
-    let rsp = printer::stop_print_job(job_id).await;
+    let rsp = printer::stop_print_job(app, job_id).await;
     println!("stop print response {:?}", rsp);
 
     return Ok(true);
