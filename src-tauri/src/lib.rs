@@ -1,12 +1,10 @@
-use crate::models::{FileList, FileItem, SmRequest};
+use crate::models::{FileItem, FileList, SmRequest};
 use std::sync::Arc;
 use tokio::sync::{Notify, RwLock};
+mod models;
 mod printer;
 mod printer_api;
-mod models;
-
-
-
+mod settings;
 
 pub struct AppState {
     pub file_list: Arc<RwLock<Option<FileList>>>,
@@ -14,46 +12,45 @@ pub struct AppState {
     pub print_filename: Arc<RwLock<Option<String>>>,
     pub upload_filename: Arc<RwLock<Option<String>>>,
     pub new_print_job: RwLock<bool>,
-    pub ui_ready: Arc<Notify>,    
-    pub sm_request: Arc<RwLock<SmRequest>>
+    pub ui_ready: Arc<Notify>,
+    pub sm_request: Arc<RwLock<SmRequest>>,
 }
 
-
 #[tauri::command]
-async fn card_clicked(state: tauri::State<'_, Arc<AppState>>,  card_id: String) ->Result<Option<FileItem>, String> {
-
+async fn card_clicked(
+    state: tauri::State<'_, Arc<AppState>>,
+    card_id: String,
+) -> Result<Option<FileItem>, String> {
     let file_list = state.file_list.read().await;
 
     if let Some(file_list) = &*file_list {
-        if let Some(file_item) = file_list.children.as_ref().unwrap().iter().find(|item| item.display_name == card_id) {
+        if let Some(file_item) = file_list
+            .children
+            .as_ref()
+            .unwrap()
+            .iter()
+            .find(|item| item.display_name == card_id)
+        {
             return Ok(Some(file_item.clone()));
-        }else{
+        } else {
             Err("File not found".into())
         }
-    }else{
+    } else {
         Err("File not found".into())
     }
 }
 
 #[tauri::command]
-async fn stop_print_clicked( job_id: i32)->Result<bool,String>{
+async fn stop_print_clicked(job_id: i32) -> Result<bool, String> {
+    println!("stop print for jobID {:?}", job_id);
+    let rsp = printer::stop_print_job(job_id).await;
+    println!("stop print response {:?}", rsp);
 
-    println!("stop print for jobID {:?}",job_id);
-    let rsp = printer::stop_print_job(job_id).await; 
-    println!("stop print response {:?}",rsp);
-
-    return Ok(true)
-
+    return Ok(true);
 }
 
-
-
 #[tauri::command]
-async fn get_file_list(
-    state: tauri::State<'_, Arc<AppState>>
-) -> Result<Option<FileList>, String> {
-
-
+async fn get_file_list(state: tauri::State<'_, Arc<AppState>>) -> Result<Option<FileList>, String> {
     println!("Fetching file list from state...");
 
     let file_list = state.file_list.read().await;
@@ -61,63 +58,55 @@ async fn get_file_list(
     Ok(file_list.clone())
 }
 
-
 #[tauri::command]
-async fn send_gcode(state: tauri::State<'_, Arc<AppState>>,path: String) -> Result<String, String> {
+async fn send_gcode(
+    state: tauri::State<'_, Arc<AppState>>,
+    path: String,
+) -> Result<String, String> {
     // Send `contents` to your printer API here.
     println!("Sending G-code to printer: {}", path);
 
-    _ =  printer::set_upload_file(&mut *state.upload_filename.write().await, &path).await;    
+    _ = printer::set_upload_file(&mut *state.upload_filename.write().await, &path).await;
 
     Ok(format!("Sent {}", path))
 }
 
-
 #[tauri::command]
-async fn ui_ready(
-    state: tauri::State<'_, Arc<AppState>>,
-) -> Result<(), String> {
-
+async fn ui_ready(state: tauri::State<'_, Arc<AppState>>) -> Result<(), String> {
     println!("React UI is ready - starting printer backend");
 
     state.ui_ready.notify_one();
 
     // write to state variable to signal the already running State Machine to restart
-    let mut sm_req = state.sm_request.write().await;    
+    let mut sm_req = state.sm_request.write().await;
     *sm_req = SmRequest::Restart;
-
-
 
     Ok(())
 }
 
-
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-
-      
     let app_state = AppState {
         file_list: Arc::new(RwLock::new(None)),
         delete_filename: Arc::new(RwLock::new(None)),
         print_filename: Arc::new(RwLock::new(None)),
         upload_filename: Arc::new(RwLock::new(None)),
-        new_print_job: RwLock::new(false),    
-        ui_ready: Arc::new(tokio::sync::Notify::new()),       
-        sm_request: Arc::new(RwLock::new(SmRequest::Continue))
+        new_print_job: RwLock::new(false),
+        ui_ready: Arc::new(tokio::sync::Notify::new()),
+        sm_request: Arc::new(RwLock::new(SmRequest::Continue)),
     };
 
     let background_state = Arc::new(app_state);
 
-
     tauri::Builder::default()
+        .plugin(tauri_plugin_store::Builder::new().build())
         .manage(background_state.clone())
-        .setup(move |app|{
-            printer::start_background_thread(app.handle().clone(),background_state.clone()); 
+        .setup(move |app| {
+            printer::start_background_thread(app.handle().clone(), background_state.clone());
             Ok(())
         })
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_dialog::init())        
+        .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             get_file_list,
             card_clicked,
@@ -125,27 +114,31 @@ pub fn run() {
             deletebutton_clicked,
             stop_print_clicked,
             printbutton_clicked,
-            ui_ready
-            ])
+            ui_ready,
+            settings::get_printer_settings,
+            settings::save_printer_settings,
+            settings::delete_printer_password,            
+        ])
         .run(tauri::generate_context!())
         .expect("error while running printer application");
 }
 
-
 #[tauri::command]
-async fn deletebutton_clicked( state: tauri::State<'_, Arc<AppState>>,name: String) -> Result<(), String> {
-    
+async fn deletebutton_clicked(
+    state: tauri::State<'_, Arc<AppState>>,
+    name: String,
+) -> Result<(), String> {
     println!("Delete button clicked for file: {}", name);
-    _ =  printer::set_delete_file(&mut *state.delete_filename.write().await, &name).await;    
+    _ = printer::set_delete_file(&mut *state.delete_filename.write().await, &name).await;
     Ok(())
 }
-
 
 #[tauri::command]
-async fn printbutton_clicked( state: tauri::State<'_, Arc<AppState>>,name: String) -> Result<(), String> {
-    
+async fn printbutton_clicked(
+    state: tauri::State<'_, Arc<AppState>>,
+    name: String,
+) -> Result<(), String> {
     println!("Print button clicked for file: {}", name);
-    _ =  printer::set_print_file(&mut *state.print_filename.write().await, &name).await;    
+    _ = printer::set_print_file(&mut *state.print_filename.write().await, &name).await;
     Ok(())
 }
-

@@ -1,15 +1,10 @@
-
-
-
 use std::time::Duration;
 
+use crate::models::{FileList, PrintJob, PrinterInfo, PrinterStatus, VersionInfo};
 use reqwest::{Client, StatusCode};
-use crate::models::{PrinterStatus,VersionInfo, PrinterInfo, FileList, PrintJob};
-
 
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(3);
 const LONG_CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
-
 
 pub async fn fetch_status(ip: &str, api_key: &str) -> Result<PrinterStatus, String> {
     let url = format!("http://{}/api/v1/status", ip);
@@ -18,7 +13,7 @@ pub async fn fetch_status(ip: &str, api_key: &str) -> Result<PrinterStatus, Stri
 
     let res = client
         .get(&url)
-        .header("X-Api-Key", api_key)      
+        .header("X-Api-Key", api_key)
         .timeout(CONNECT_TIMEOUT)
         .send()
         .await
@@ -40,12 +35,14 @@ pub async fn fetch_status(ip: &str, api_key: &str) -> Result<PrinterStatus, Stri
 pub async fn fetch_version(ip: &str, api_key: &str) -> Result<VersionInfo, String> {
     let url = format!("http://{}/api/version", ip);
 
+    println!("Fetching version from URL: {}", url);
+
     let client = Client::new();
 
     let res = client
         .get(&url)
         .header("X-Api-Key", api_key)
-        .timeout(CONNECT_TIMEOUT)           
+        .timeout(CONNECT_TIMEOUT)
         .send()
         .await
         .map_err(|e| e.to_string())?;
@@ -55,10 +52,7 @@ pub async fn fetch_version(ip: &str, api_key: &str) -> Result<VersionInfo, Strin
         return Err(format!("HTTP error: {}", res.status()));
     }
 
-    let json = res
-        .json::<VersionInfo>()
-        .await
-        .map_err(|e| e.to_string())?;
+    let json = res.json::<VersionInfo>().await.map_err(|e| e.to_string())?;
 
     Ok(json)
 }
@@ -81,10 +75,7 @@ pub async fn fetch_info(ip: &str, api_key: &str) -> Result<PrinterInfo, String> 
         return Err(format!("HTTP error: {}", res.status()));
     }
 
-    let json = res
-        .json::<PrinterInfo>()
-        .await
-        .map_err(|e| e.to_string())?;
+    let json = res.json::<PrinterInfo>().await.map_err(|e| e.to_string())?;
 
     Ok(json)
 }
@@ -107,31 +98,22 @@ pub async fn fetch_file_info(ip: &str, api_key: &str) -> Result<FileList, String
         return Err(format!("HTTP error: {}", res.status()));
     }
 
-    let json = res
-        .json::<FileList>()
-        .await
-        .map_err(|e| e.to_string())?;
+    let json = res.json::<FileList>().await.map_err(|e| e.to_string())?;
 
     Ok(json)
 }
 
-
-pub async fn fetch_file_image(
-    ip: &str,
-    api_key: &str,
-    image_name: &str) -> Option<Vec<u8>> {
-        
+pub async fn fetch_file_image(ip: &str, api_key: &str, image_name: &str) -> Option<Vec<u8>> {
     let url = format!("http://{}/thumb/l/usb/{}", ip, image_name);
 
     println!("Fetching image from URL: {}", url);
 
     let client = Client::new();
 
-
     match client
         .get(url)
         .header("X-Api-Key", api_key)
-        .timeout(Duration::from_secs(120))        
+        .timeout(Duration::from_secs(120))
         .send()
         .await
     {
@@ -142,20 +124,19 @@ pub async fn fetch_file_image(
                     Err(_) => None,
                 }
             } else {
-                println!("HTTP error: {}", response.status());                
+                println!("HTTP error: {}", response.status());
                 None
-
             }
         }
         Err(_) => None,
     }
-
-
-
 }
 
-
-pub async fn delete_print_file(ip: &str, api_key: &str, filename: &str) -> Result<StatusCode,String> {
+pub async fn delete_print_file(
+    ip: &str,
+    api_key: &str,
+    filename: &str,
+) -> Result<StatusCode, String> {
     let url = format!("http://{}/api/v1/files/usb/{}", ip, filename);
 
     let client = Client::new();
@@ -173,12 +154,10 @@ pub async fn delete_print_file(ip: &str, api_key: &str, filename: &str) -> Resul
         return Err(format!("HTTP error: {}", res.status()));
     }
 
-
-    Ok(res.status())  
+    Ok(res.status())
 }
 
-
-pub async fn send_print_job(ip: &str, api_key: &str, filename: &str) -> Result<StatusCode,String> {
+pub async fn send_print_job(ip: &str, api_key: &str, filename: &str) -> Result<StatusCode, String> {
     let url = format!("http://{}/api/v1/files/usb/{}", ip, filename);
 
     let client = Client::new();
@@ -195,42 +174,33 @@ pub async fn send_print_job(ip: &str, api_key: &str, filename: &str) -> Result<S
         return Err(format!("HTTP error: {}", res.status()));
     }
 
-
-    Ok(res.status())  
+    Ok(res.status())
 }
-
-
 
 pub async fn upload_printer_file(
     ip: &str,
     api_key: &str,
-    local_file_path: &str) -> Result<u16,String> {
-        
-
+    local_file_path: &str,
+) -> Result<u16, String> {
     let path = std::path::Path::new(local_file_path);
 
     let file_name = path
         .file_name()
         .and_then(|name| name.to_str())
-        .ok_or("Invalid file name")?;    
-
+        .ok_or("Invalid file name")?;
 
     let url = format!("http://{}/api/v1/files/usb/{}", ip, file_name);
 
     println!("Uploading file to URL: {}", url);
 
-
     let file_content = tokio::fs::read(path)
         .await
-        .map_err(|e| format!("Could not read file: {}", e))?;    
-
-
+        .map_err(|e| format!("Could not read file: {}", e))?;
 
     let client = Client::builder()
         .timeout(Duration::from_secs(20))
         .build()
         .map_err(|e| format!("Could not create HTTP client: {}", e))?;
-
 
     let response = client
         .put(&url)
@@ -244,11 +214,7 @@ pub async fn upload_printer_file(
         .map_err(|e| format!("Upload failed: {}", e))?;
 
     Ok(response.status().as_u16())
-
-
-
 }
-
 
 pub async fn fetch_job_info(ip: &str, api_key: &str) -> Result<PrintJob, String> {
     let url = format!("http://{}/api/v1/job", ip);
@@ -268,23 +234,17 @@ pub async fn fetch_job_info(ip: &str, api_key: &str) -> Result<PrintJob, String>
         return Err(format!("HTTP error: {}", res.status()));
     }
 
-    // print the response body    
-    let response_body = res.text().await
-        .map_err(|e| e.to_string())?;
+    // print the response body
+    let response_body = res.text().await.map_err(|e| e.to_string())?;
 
-   // println!("response body {}",response_body);
+    // println!("response body {}",response_body);
 
-
-    let json = serde_json::from_str::<PrintJob>(&response_body)
-        .map_err(|e| e.to_string())?;    
-
+    let json = serde_json::from_str::<PrintJob>(&response_body).map_err(|e| e.to_string())?;
 
     Ok(json)
 }
 
-
-pub async fn stop_print_job(ip: &str, api_key: &str, id:i32) -> Result<(), String> {
-
+pub async fn stop_print_job(ip: &str, api_key: &str, id: i32) -> Result<(), String> {
     let url = format!("http://{}/api/v1/job/{}", ip, id);
     let client = Client::new();
 
@@ -300,7 +260,6 @@ pub async fn stop_print_job(ip: &str, api_key: &str, id:i32) -> Result<(), Strin
         println!("HTTP error: {}", res.status());
         return Err(format!("HTTP error: {}", res.status()));
     }
-
 
     Ok(())
 }

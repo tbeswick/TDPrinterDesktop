@@ -1,11 +1,12 @@
 
-use crate::{AppState, models::SmRequest, printer_api::{self, *}};
+use crate::{AppState, models::SmRequest, printer, printer_api::{self, *}};
 use crate::models::{FileList,FileItem,ThumbnailState}; 
 use std::time::Duration;
 use tauri::Emitter;
 use std::sync::Arc;
 use std::fs;
 use crate::models::{SmState};
+use crate::settings;
 
 
 
@@ -29,12 +30,13 @@ const IMAGE_CACHE_DIR:&str = "../image_cache";
 }
 
 
-async fn process_file(child: FileItem) -> Option<Vec<u8>>   {
+async fn process_file(child: FileItem, printer_url: &str, printer_key: &str) -> Option<Vec<u8>>   {
     println!("Processing {:?}", child.display_name);
 
+
     if let Some(image) = fetch_file_image(
-        PRINTER_IP,
-        APIKEY,
+        printer_url,
+        printer_key,
         &child.name.as_deref().unwrap_or(""),
     )
     .await
@@ -74,10 +76,10 @@ async fn get_next_thumbnail_job(
 
 
 async fn download_thumbnail(
-    file: &FileItem,
+    file: &FileItem, printer_url: &str, printer_key: &str
 ) -> Result<Vec<u8>, String> {
 
-    let res = process_file(file.clone()).await;
+    let res = process_file(file.clone(), printer_url, printer_key).await;
     Ok(res.unwrap_or_else(|| Vec::new()))
 }
 
@@ -192,7 +194,7 @@ pub fn manage_file_thumbnails(
                 );
 
                 let image =
-                    download_thumbnail(&file).await;
+                    download_thumbnail(&file,PRINTER_IP,APIKEY).await;
 
                 update_thumbnail(
                     &app,
@@ -250,6 +252,18 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
         loop {
 
 
+            let api_url =
+                settings::get_api_url(&app.clone());
+
+            let password =
+                settings::get_api_password();
+            let printer_url = api_url.unwrap_or_else(|_| "".to_string());
+            let printer_key = password.unwrap_or_else(|_| "".to_string());
+
+            println!("api url: {:?} password: {:?}", printer_url, printer_key); 
+
+
+
             // check for delete file request
             let mut delete_filename = app_state.delete_filename.write().await;
             if delete_filename.is_some() && !delete_filename.as_ref().unwrap().is_empty() {
@@ -280,7 +294,7 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
             state  = match state {
                 SmState::Connect => {
                     println!("Connecting to printer...");
-                    let printer_version  =  fetch_version(PRINTER_IP, APIKEY).await.map_err(|e| e.to_string());
+                    let printer_version  =  fetch_version(&printer_url, &printer_key).await.map_err(|e| e.to_string());
                     if printer_version.is_err() {
                         println!("Error fetching printer version: {:?}", printer_version.err());
                         // Handle the error, maybe retry or transition to an error state
@@ -294,19 +308,19 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                 }
                 SmState::Info => {
                     println!("Fetching printer info...");
-                    let printer_info = fetch_info(PRINTER_IP, APIKEY).await.map_err(|e| e.to_string());
+                    let printer_info = fetch_info(&printer_url, &printer_key).await.map_err(|e| e.to_string());
                     if printer_info.is_err() {
                         println!("Error fetching printer info: {:?}", printer_info.err());
                         // Handle the error, maybe retry or transition to an error state
                         SmState::Connect // Retry connecting
                     } else {
                         println!("Printer Info: {:?}", printer_info);
-                        SmState::Files // Transition to Status state on success
+                        SmState::Files // Transition to Files state on success
                     }
                 }
                 SmState::Files => {
                     println!("Fetching files...");
-                    let file_list_response = fetch_file_info(PRINTER_IP, APIKEY).await.map_err(|e| e.to_string());
+                    let file_list_response = fetch_file_info(&printer_url, &printer_key).await.map_err(|e| e.to_string());
                     if file_list_response.is_err() {
                         println!("Error fetching file list: {:?}", file_list_response.err());
                         // Handle the error, maybe retry or transition to an error state
@@ -355,7 +369,7 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                 }
                 SmState::DeleteFile => {
                     println!("Deleting file...{}", delete_filename.as_ref().unwrap());
-                    let delete_result = delete_print_file(PRINTER_IP, APIKEY, delete_filename.as_ref().unwrap()).await.map_err(|e| e.to_string());                
+                    let delete_result = delete_print_file(&printer_url, &printer_key, delete_filename.as_ref().unwrap()).await.map_err(|e| e.to_string());                
                     if let Err(error) = delete_result {
                         if error.contains("409 Conflict") {
                             let cp_delete_filename = delete_filename.as_ref().unwrap().clone();                          
@@ -378,7 +392,7 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                 }
                 SmState::UploadFile => {
                     println!("Uploading file...{}", upload_filename.as_ref().unwrap());
-                    let upload_file = upload_printer_file(PRINTER_IP, APIKEY, upload_filename.as_ref().unwrap()).await.map_err(|e| e.to_string());
+                    let upload_file = upload_printer_file(&printer_url, &printer_key, upload_filename.as_ref().unwrap()).await.map_err(|e| e.to_string());
                     if upload_file.is_err() {
                         println!("Error uploading file: {:?}", upload_file.err());
                         // Handle the error, maybe retry or transition to an error state
@@ -391,7 +405,7 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                 }
                 SmState::SendPrintJob => {
                     println!("Sending print job...{}", print_filename.as_ref().unwrap());
-                    let print_result = send_print_job(PRINTER_IP, APIKEY, print_filename.as_ref().unwrap()).await.map_err(|e| e.to_string());
+                    let print_result = send_print_job(&printer_url, &printer_key, print_filename.as_ref().unwrap()).await.map_err(|e| e.to_string());
                     if let Err(error) = print_result {
                         println!("Print job failed: {}", error);
                         print_filename.replace("".to_string());// Clear the print filename after processing                               
@@ -405,7 +419,7 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                 
                 SmState::NewJob => {
                     println!("Sending job info request...");
-                    let job_result = fetch_job_info(PRINTER_IP,APIKEY).await.map_err(|e| e.to_string());
+                    let job_result = fetch_job_info(&printer_url, &printer_key).await.map_err(|e| e.to_string());
                     if job_result.is_err() {
                         println!("Error fetching printer job info: {:?}", job_result.err());
                         // Handle the error, maybe retry or transition to an error state
@@ -424,8 +438,7 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                     SmState::Status
                 }
                 SmState::Status => {
-                 //   println!("Fetching printer status...");
-                    let printer_status = fetch_status(PRINTER_IP, APIKEY).await.map_err(|e| e.to_string());                            
+                    let printer_status = fetch_status(&printer_url, &printer_key).await.map_err(|e| e.to_string());                            
                     if printer_status.is_err() {
                         println!("Error fetching printer status: {:?}", printer_status.err());
                         // Handle the error, maybe retry or transition to an error state
@@ -436,10 +449,8 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                         app.emit("printer-status-updated", &status).unwrap();
                         let sts = status.printer.unwrap().state;
                         let mut new_job_flag = app_state.new_print_job.write().await;
-                        println!("new_job {:?}",new_job_flag);
                         if !*new_job_flag  &&  sts == Some("PRINTING".to_string()) {     
                             *new_job_flag = true;
-                            println!("nj {}",new_job_flag);
                             SmState::NewJob
                         }else if Some("PRINTING".to_string()) != sts{
                             // reset the new job flag whn not printing

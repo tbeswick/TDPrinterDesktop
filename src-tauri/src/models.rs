@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ThumbnailState {
     NotStarted,
@@ -9,33 +8,28 @@ pub enum ThumbnailState {
     Failed,
 }
 
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum SmState{
+pub enum SmState {
     Connect,
     Info,
     Files,
     Idle,
     Status,
     UploadFile,
-     DeleteFile,
-     SendPrintJob,
-     NewJob,     
+    DeleteFile,
+    SendPrintJob,
+    NewJob,
     // StopPrintJob,
     // PausePrintJob,
     // ResumePrintJob
 }
 
-
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub enum SmRequest{
+pub enum SmRequest {
     Continue,
     Idle,
     Restart,
 }
-
-
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PrinterStatus {
@@ -74,12 +68,10 @@ pub struct JobStatus {
     pub time_printing: Option<u64>,
 }
 
-
 #[derive(Debug, Serialize, Deserialize)]
-pub struct CapInfo{
+pub struct CapInfo {
     pub upload_by_pc: Option<bool>,
 }
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct VersionInfo {
@@ -93,7 +85,6 @@ pub struct VersionInfo {
     pub capabilities: Option<CapInfo>,
 }
 
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PrinterInfo {
     pub nozzle_diameter: Option<f64>,
@@ -103,19 +94,13 @@ pub struct PrinterInfo {
     pub min_extrusion_temp: Option<i64>,
 }
 
-
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileList {
     #[serde(rename = "children")]
-    pub children: Option<Vec<FileItem>>,    
+    pub children: Option<Vec<FileItem>>,
 }
 
-
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
-
-
 
 pub struct FileItem {
     #[serde(rename = "name")]
@@ -139,18 +124,15 @@ pub struct FileItem {
     #[serde(rename = "thumbnail_downloaded")]
     pub thumbnail_state: Option<ThumbnailState>,
 
-
     pub thumbnail_path: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileRefs {
-    pub icon: Option<String>,    
+    pub icon: Option<String>,
     pub thumbnail: Option<String>,
     pub download: Option<String>,
 }
-
-
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct PrintFile {
@@ -162,16 +144,12 @@ pub struct PrintFile {
     pub m_timestamp: i64,
 }
 
-
-
-
-
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PrintJob{        
-    pub id: i32,        
-    pub state: Option<String>,    
+pub struct PrintJob {
+    pub id: i32,
+    pub state: Option<String>,
     pub progress: f64,
-    pub time_remaining: i32,        
+    pub time_remaining: i32,
     pub time_printing: i32,
     pub file: PrintFile,
 }

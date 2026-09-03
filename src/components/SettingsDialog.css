@@ -1,0 +1,145 @@
+.settings-overlay {
+    position: fixed;
+    inset: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: rgba(0, 0, 0, 0.45);
+
+    z-index: 2000;
+}
+
+.settings-dialog {
+    position: relative;
+
+    width: 450px;
+    padding: 2rem;
+
+    background: white;
+    color: black;
+
+    border-radius: 8px;
+
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.35);
+
+    box-sizing: border-box;
+}
+
+.settings-dialog h2 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+}
+
+.settings-close-btn {
+    position: absolute;
+
+    top: 8px;
+    right: 8px;
+
+    width: 32px;
+    height: 32px;
+
+    padding: 0;
+    margin: 0;
+
+    border: none;
+    background: transparent;
+
+    font-size: 28px;
+    line-height: 32px;
+
+    color: #333;
+
+    cursor: pointer;
+}
+
+.settings-close-btn:hover {
+    color: #d00000;
+}
+
+.settings-field {
+    display: flex;
+    flex-direction: column;
+
+    margin-bottom: 1.25rem;
+}
+
+.settings-field label {
+    margin-bottom: 0.4rem;
+
+    font-weight: 600;
+}
+
+.settings-field input {
+    width: 100%;
+
+    padding: 0.65rem;
+
+    border: 1px solid #aaa;
+    border-radius: 4px;
+
+    font-size: 1rem;
+
+    box-sizing: border-box;
+}
+
+.settings-field input:focus {
+    outline: none;
+    border-color: #3578e5;
+}
+
+.password-status {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 1rem;
+
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+
+    background: #f0f0f0;
+
+    border-radius: 4px;
+
+    font-size: 0.9rem;
+}
+
+.password-status button {
+    padding: 0.4rem 0.75rem;
+}
+
+.settings-error {
+    margin-bottom: 1rem;
+
+    padding: 0.75rem;
+
+    color: #a00000;
+
+    background: #ffe0e0;
+
+    border-radius: 4px;
+}
+
+.settings-buttons {
+    display: flex;
+
+    justify-content: flex-end;
+
+    gap: 0.75rem;
+
+    margin-top: 1.5rem;
+}
+
+.settings-buttons button {
+    padding: 0.6rem 1.3rem;
+
+    border: none;
+
+    border-radius: 4px;
+
+    cursor: pointer;
+}

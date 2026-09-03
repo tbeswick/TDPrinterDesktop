@@ -9,6 +9,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import { TemperatureReading } from "../types/temperature";
 import TempertureChart from "../components/TemperatureChart"
+import SettingsDialog from "../components/SettingsDialog";
 import "./layout.css";
 
 
@@ -26,6 +27,7 @@ export default function DashboardLayout({
   const [jobInfo, setJobInfo] = useState<PrintJob | null>(null);
   const [showAbout, setShowAbout] = useState<boolean | null>(null);
   const [temperatureReadings, setTemperatureReadings] = useState<TemperatureReading[]>([]);  
+  const [showSettings, setShowSettings] = useState(false);  
 
 
 
@@ -154,6 +156,25 @@ export default function DashboardLayout({
           </p>
         </div>
 
+      <div style={{ flex: "1", textAlign: "center" }}>
+        <a
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            setShowSettings(true);
+          }}
+          style={{
+            paddingRight: "30px",
+            textDecoration: "none",
+            fontSize: "18px",
+            color: "#ccd5ee"
+          }}
+        >
+          Settings
+        </a>
+        </div>  
+
+
         <div style={{ flex: "1", textAlign: "right" }}>
           <a href="#" onClick={handleAboutClick} style={{ paddingRight: "30px", textDecoration: "none", fontSize: "18px", color: "#ccd5ee" }} >printer version</a>
         </div>
@@ -235,6 +256,15 @@ export default function DashboardLayout({
 
             )
           }
+
+
+
+          {showSettings && (
+            <SettingsDialog
+              onClose={() => setShowSettings(false)}
+            />
+          )}
+
 
 
           {selectedFile && (
