@@ -110,13 +110,10 @@
 
 
 .button-row {
-    display: flex;
-    gap: 0.75rem;
     padding-top: 1rem;
 }
 
-.button-row button {
-    flex: 1;              /* Makes all three buttons equal width */
+.button-row button {            /* Makes all three buttons equal width */
     padding: 0.75rem 1rem;
     border: 1px solid #eceaea;
     border-radius: 6px;
@@ -124,6 +121,8 @@
     font-weight: bold;
     cursor: pointer;
     transition: opacity 0.2s;
+    width: 120px;
+    margin-right: 8px;
 }
 
 .button-row button:hover {
@@ -132,23 +131,33 @@
 
 .delete-btn {
     background-color: #dc3545;
+    height: 60px;
 }
 
 .print-btn {
     background-color: #28a745;
+    height: 60px;
 }
 
 .pause-btn {
     background-color: #7abafd;
+    display:inline-block;
+    width: 100px;
+    height: 40px;
 }
 
 .stop-btn {
     background-color: #f796a6;
+    display:inline-block;
+    width: 100px;
+    height: 40px;
 }
 
 .resume-btn {
     background-color: #c6c917;
-    display:none
+    display:inline-block;
+    width: 100px;
+    height: 40px;
 }
 
 

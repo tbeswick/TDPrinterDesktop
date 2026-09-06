@@ -263,3 +263,44 @@ pub async fn stop_print_job(ip: &str, api_key: &str, id: i32) -> Result<(), Stri
 
     Ok(())
 }
+
+
+pub async fn pause_print_job(ip: &str, api_key: &str, id: i32) -> Result<(), String> {
+    let url = format!("http://{}/api/v1/job/{}/pause", ip, id);
+    let client = Client::new();
+
+    let res = client
+        .put(&url)
+        .header("X-Api-Key", api_key)
+        .timeout(LONG_CONNECT_TIMEOUT)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !res.status().is_success() {
+        println!("HTTP error: {}", res.status());
+        return Err(format!("HTTP error: {}", res.status()));
+    }
+
+    Ok(())
+}
+
+pub async fn resume_print_job(ip: &str, api_key: &str, id: i32) -> Result<(), String> {
+    let url = format!("http://{}/api/v1/job/{}/resume", ip, id);
+    let client = Client::new();
+
+    let res = client
+        .put(&url)
+        .header("X-Api-Key", api_key)
+        .timeout(LONG_CONNECT_TIMEOUT)
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if !res.status().is_success() {
+        println!("HTTP error: {}", res.status());
+        return Err(format!("HTTP error: {}", res.status()));
+    }
+
+    Ok(())
+}

@@ -11,6 +11,7 @@ import { TemperatureReading } from "../types/temperature";
 import TempertureChart from "../components/TemperatureChart"
 import SettingsDialog from "../components/SettingsDialog";
 import "./layout.css";
+import { TauriEvent } from "@tauri-apps/api/event";
 
 
 
@@ -28,6 +29,10 @@ export default function DashboardLayout({
   const [showAbout, setShowAbout] = useState<boolean | null>(null);
   const [temperatureReadings, setTemperatureReadings] = useState<TemperatureReading[]>([]);  
   const [showSettings, setShowSettings] = useState(false);  
+
+  const [printStop, setPrintStop] = useState<boolean>(true);
+  const [printPause, setPrintPause] = useState<boolean>(true);
+  const [printResume, setPrintResume] = useState<boolean>(true);
 
 
 
@@ -73,13 +78,58 @@ export default function DashboardLayout({
   }
 
 
+  async function handlePrintButtonClick() {
+    await invoke<string>("printbutton_clicked", {
+      name: selectedFile?.name || "Unknown",
+    });
+    // clear the selected file (clears display) after print request
+    selectedFile && setSelectedFile(null);
+
+    setPrintStop(true); // Show the Stop button when a print job starts
+    setPrintPause(true); // Show the Pause button when a print job starts
+    setPrintResume(false); // Hide the Resume button when a print job starts
+
+  }  
+
+
+
   async function handleStopPrintClick() {
 
     await invoke<boolean>("stop_print_clicked", {
       jobId: jobInfo?.id || 0
     })
-    setJobInfo(null);
+    setPrintStop(false); // Hide the Stop button after stopping the print
+    setPrintPause(false); // Hide the Pause button after stopping the print
+    setPrintResume(false); // Hide the Resume button after stopping the print
+
   }
+
+
+  async function handlePausePrintClick() {
+
+    await invoke<boolean>("pause_print_clicked", {
+      jobId: jobInfo?.id || 0
+    })    
+
+
+    setPrintPause(false); // Hide the Pause button after pausing the print
+    setPrintResume(true); // Show the Resume button after pausing the print
+    setPrintStop(true); // Show the Stop button after pausing the print
+
+  }
+  
+  async function handleResumePrintClick() {
+
+    await invoke<boolean>("resume_print_clicked", {
+      jobId: jobInfo?.id || 0
+    });
+
+    setPrintResume(false); // Hide the Resume button when a print job is resumed
+    setPrintPause(true); // Show the Pause button when a print job is resumed
+    setPrintStop(true); // Show the Stop button when a print job is resumed
+
+  }  
+
 
 
   async function handleAboutClick() {
@@ -123,13 +173,7 @@ export default function DashboardLayout({
 
 
 
-  async function handlePrintButtonClick() {
-    await invoke<string>("printbutton_clicked", {
-      name: selectedFile?.name || "Unknown",
-    });
-    // clear the selected file (clears display) after print request
-    selectedFile && setSelectedFile(null);
-  }
+
 
 
   return (
@@ -287,11 +331,10 @@ export default function DashboardLayout({
                 <p>System name: {selectedFile.name}</p>
 
 
-                <div className="button-row">
+                <div className="button-row" style={{ display: "flex", justifyContent: "space-between", marginTop: "20px" }}>
                   <button className="delete-btn" onClick={handleDeleteButtonClick}>
                     Delete File
                   </button>
-                  {/* <button className="pause-btn" style={{visibility: "hidden"}}>Pause Print</button>                 */}
                   <button className="print-btn" onClick={handlePrintButtonClick} style={{ visibility: jobInfo ? "hidden" : "visible" }}>
                     Print File
                   </button>
@@ -303,23 +346,23 @@ export default function DashboardLayout({
 
 
           {jobInfo ? (
-            <div style={{ display: "grid", gridTemplateColumns: "440px 1fr" }} >
+            <div style={{ display: "grid", gridTemplateColumns: "400px 400px 400px", gridGap: "16px" }} >
               <div style={{ paddingTop: "50px", textAlign: "left", paddingLeft: "16px", gridColumn: "1" }} >
                 <img src={jobInfo?.file?.refs?.thumbnail} alt="Thumbnail" style={{ width: "300px", height: "300px", paddingLeft: "45px" }} />
                 <p style={{ color: "black", fontSize: "16px" , paddingLeft:"45px"}}>{jobInfo?.file?.display_name}</p>
                 <p>{jobInfo?.file?.m_timestamp}</p>
               </div>
-              <div style={{ gridColumn: "2", gridRow: "1", paddingTop: "35px", display: "grid" }}>
-                <div className="button-row" style={{ width: "400px", height:"60px", gridRow:"1" }}>
-                  <button className="stop-btn" onClick={() => handleStopPrintClick()}>
-                    Stop
-                  </button>
-                  <button className="pause-btn">
-                    Pause
-                  </button>
-                  <button className="resume-btn" style={{ display: "none" }}>
-                    Resume
-                  </button>            
+              <div style={{ gridColumn: "2", paddingTop: "35px"}}>
+                <div className="button-row">                  
+                      <button className="stop-btn" style={{ visibility: printStop ? "visible" : "hidden" }} onClick={() => handleStopPrintClick()}>
+                        Stop
+                      </button>                    
+                      <button className="pause-btn" style={{ visibility: printPause ? "visible" : "hidden" }} onClick={() => handlePausePrintClick()}>
+                        Pause
+                      </button>                  
+                      <button className="resume-btn" style={{ visibility: printResume ? "visible" : "hidden" }} onClick={() => handleResumePrintClick()}>
+                        Resume
+                      </button>                             
                 </div>
                 {
                   (status && status.job) && 

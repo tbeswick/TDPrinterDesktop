@@ -49,6 +49,28 @@ async fn stop_print_clicked( app: tauri::AppHandle, job_id: i32) -> Result<bool,
     return Ok(true);
 }
 
+
+#[tauri::command]
+async fn pause_print_clicked( app: tauri::AppHandle, job_id: i32) -> Result<bool, String> {
+    println!("pause print for jobID {:?}", job_id);
+    let rsp = printer::pause_print_job(app, job_id).await;
+    println!("pause print response {:?}", rsp);
+
+    return Ok(true);
+}
+
+#[tauri::command]
+async fn resume_print_clicked( app: tauri::AppHandle, job_id: i32) -> Result<bool, String> {
+    println!("resume print for jobID {:?}", job_id);
+    let rsp = printer::resume_print_job(app, job_id).await;
+    println!("resume print response {:?}", rsp);
+
+    return Ok(true);
+}
+
+
+
+
 #[tauri::command]
 async fn get_file_list(state: tauri::State<'_, Arc<AppState>>) -> Result<Option<FileList>, String> {
     println!("Fetching file list from state...");
@@ -113,6 +135,8 @@ pub fn run() {
             send_gcode,
             deletebutton_clicked,
             stop_print_clicked,
+            pause_print_clicked,
+            resume_print_clicked,
             printbutton_clicked,
             ui_ready,
             settings::get_printer_settings,
