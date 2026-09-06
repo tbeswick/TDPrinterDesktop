@@ -497,6 +497,7 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                         if Some("STOPPED".to_string()) == sts {
                             // set the job stopped flag to true when the printer is stopped
                             job_stopped = true;
+                            *new_job_flag = false;                            
                             SmState::Status
                         } else if Some("IDLE".to_string()) == sts {
                             // for a job that has been stopped, emit a job stopped event when the printer is idle
@@ -509,16 +510,13 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                             SmState::Status
                         }
                         else{       
-
-                            let mut set_new = false;
                             if !*new_job_flag && sts == Some("PRINTING".to_string()) {
                                 *new_job_flag = true;
-                                set_new = true
                             }else if Some("PRINTING".to_string()) != sts {
                                 // reset the new job flag whn not printing
                                 *new_job_flag = false;
                             }                           
-                            if set_new {SmState::NewJob} else {SmState::Status}
+                            if *new_job_flag {SmState::NewJob} else {SmState::Status}
                         }
                     }
                 }
