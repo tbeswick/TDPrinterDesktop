@@ -44,6 +44,31 @@ export function usePrinterEvents(
     }, []);
 
 
+    useEffect(() => {
+
+        let unlisten: (() => void) | undefined;
+
+        async function setupListener() {
+
+            unlisten = await listen("job-stopped", async () => {
+                console.log("job-stopped event");
+                setJobInfo(null);
+            });
+        }
+
+        setupListener();
+
+        return () => {
+            if (unlisten) {
+                unlisten();
+            }
+        };
+
+    }, []);    
+
+
+
+
   useEffect(() => {
     let unlisten: (() => void) | undefined;
 

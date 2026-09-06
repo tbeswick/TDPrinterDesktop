@@ -231,6 +231,10 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
     tauri::async_runtime::spawn(async move {
         let mut state = SmState::Connect;
 
+        let mut job_stopped = false;
+
+
+
         // Wait until React tells us that it is ready.
         app_state.ui_ready.notified().await;
 
@@ -485,20 +489,36 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                         // Handle the error, maybe retry or transition to an error state
                         SmState::Connect // Retry connecting
                     } else {
+                        let mut new_job_flag = app_state.new_print_job.write().await;                        
                         let status = printer_status.unwrap();
                         println!("Printer Status: {:?}", status);
                         app.emit("printer-status-updated", &status).unwrap();
                         let sts = status.printer.unwrap().state;
-                        let mut new_job_flag = app_state.new_print_job.write().await;
-                        if !*new_job_flag && sts == Some("PRINTING".to_string()) {
-                            *new_job_flag = true;
-                            SmState::NewJob
-                        } else if Some("PRINTING".to_string()) != sts {
-                            // reset the new job flag whn not printing
-                            *new_job_flag = false;
+                        if Some("STOPPED".to_string()) == sts {
+                            // set the job stopped flag to true when the printer is stopped
+                            job_stopped = true;
                             SmState::Status
-                        } else {
+                        } else if Some("IDLE".to_string()) == sts {
+                            // for a job that has been stopped, emit a job stopped event when the printer is idle
+                            println!("Printer is idle, checking if job was stopped...{:?}", job_stopped);
+                            if job_stopped {
+                                app.emit("job-stopped", ()).unwrap();
+                                job_stopped = false;
+                            }
+                            *new_job_flag = false;                            
                             SmState::Status
+                        }
+                        else{       
+
+                            let mut set_new = false;
+                            if !*new_job_flag && sts == Some("PRINTING".to_string()) {
+                                *new_job_flag = true;
+                                set_new = true
+                            }else if Some("PRINTING".to_string()) != sts {
+                                // reset the new job flag whn not printing
+                                *new_job_flag = false;
+                            }                           
+                            if set_new {SmState::NewJob} else {SmState::Status}
                         }
                     }
                 }
