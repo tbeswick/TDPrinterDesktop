@@ -7,6 +7,7 @@ import { VersionInfo } from "../types/versioninfo";
 import { PrintJob } from "../types/printjobinfo";
 import { TemperatureReading } from "../types/temperature";
 import { format } from "../components/stringUtils"
+import { convertFileSrc } from "@tauri-apps/api/core";
 
 
 export function usePrinterEvents(
@@ -28,8 +29,18 @@ export function usePrinterEvents(
             unlisten = await listen("file-list-updated", async () => {
 
                 const updatedFiles = await invoke<FileList | null>("get_file_list");
-                 console.log("Updated file list:", updatedFiles!.children);
-                setFiles(updatedFiles!.children ?? []);
+                  if (!updatedFiles?.children) {
+                      setFiles([]);
+                      return;
+                  }                 
+
+                  const filesWithImages = updatedFiles.children.map((file) => ({
+                      ...file,
+                      imageSrc: file.thumbnail_path
+                          ? convertFileSrc(file.thumbnail_path)
+                          : undefined,
+                  }));              
+                setFiles(filesWithImages);
             });
         }
 
@@ -195,42 +206,26 @@ useEffect(() => {
             unlisten = await listen("file-image-updated", async () => {
 
                 const updatedFiles = await invoke<FileList | null>("get_file_list");
-                 console.log("Updated file list:", updatedFiles!.children);
-                setFiles(updatedFiles!.children ?? []);
+
+                  if (!updatedFiles?.children) {
+                      setFiles([]);
+                      return;
+                  }                 
+
+                  const filesWithImages = updatedFiles.children.map((file) => ({
+                      ...file,
+                      imageSrc: file.thumbnail_path
+                          ? convertFileSrc(file.thumbnail_path)
+                          : undefined,
+                  }));              
+
+                setFiles(filesWithImages);
             });
         }
 
         setupListener();    
 
 
-    // async function setup() {
-
-    //     unlisten = await listen<ThumbnailEvent>(
-    //         "file-image-updated",
-
-    //         (event) => {
-
-    //             const thumbnail = event.payload;
-
-    //             setFiles(oldFiles =>
-
-    //                 oldFiles.map(file => {
-
-    //                    console.log("Updating file:", file.thumbnail_path, "with thumbnail path:", thumbnail.path);
-    //                     if (file.thumbnail_path !== thumbnail.path)
-    //                         return file;
-
-    //                     return {
-    //                         ...file,
-    //                         image: thumbnail.image
-    //                     };
-    //                 })
-    //             );
-    //         }
-    //     );
-    // }
-
-    //setup();
 
     return () => {
         unlisten?.();

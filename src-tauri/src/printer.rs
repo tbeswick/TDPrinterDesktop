@@ -11,8 +11,10 @@ use std::sync::Arc;
 use std::time::Duration;
 use tauri::AppHandle;
 use tauri::Emitter;
+use std::path::PathBuf;
+use tauri::Manager;
 
-const IMAGE_CACHE_DIR: &str = "../image_cache";
+
 
 fn print_files(file_list: &FileList) {
     if let Some(children) = &file_list.children {
@@ -98,8 +100,11 @@ async fn update_thumbnail(
             Ok(bytes) => {
                 child.thumbnail_image = Some(bytes);
 
+                let c_path = get_image_cache_dir(&app).unwrap();
+                let cache_path_str = c_path.display().to_string();                
+
                 // save the image to the cache directory
-                let cache_path = format!("{}/{}.png", IMAGE_CACHE_DIR, filename);
+                let cache_path = format!("{}/{}.png", cache_path_str, filename);
                 child.thumbnail_path = Some(cache_path.clone());
                 if let Err(e) = fs::write(&cache_path, child.thumbnail_image.as_ref().unwrap()) {
                     println!("Failed to save image to cache: {}", e);
@@ -238,9 +243,12 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
         // Wait until React tells us that it is ready.
         app_state.ui_ready.notified().await;
 
+
+        let c_path = get_image_cache_dir(&app).unwrap();
+        let cache_path_str = c_path.display().to_string();
         // Create the image cache directory if it doesn't exist
-        if !std::path::Path::new(IMAGE_CACHE_DIR).exists() {
-            if let Err(e) = fs::create_dir_all(IMAGE_CACHE_DIR) {
+        if !std::path::Path::new(&cache_path_str).exists() {
+            if let Err(e) = fs::create_dir_all(&cache_path_str) {
                 println!("Failed to create image cache directory: {}", e);
             }
         }
@@ -330,14 +338,19 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                             *file_list = Some(file_list_remote);
                             for child in file_list.as_mut().unwrap().children.as_mut().unwrap() {
                                 child.thumbnail_image = None;
-                                child.thumbnail_path = check_for_cache_image(&child.display_name);
-                                child.thumbnail_state = check_for_cache_state(&child.display_name);
+                                child.thumbnail_path = check_for_cache_image(&app,&child.display_name);
+                                child.thumbnail_state = check_for_cache_state(&app,&child.display_name);
                             }
                         }
                         app.emit("file-list-updated", ()).unwrap();
 
+
+                        let c_path = get_image_cache_dir(&app).unwrap();
+                        let cache_path_str = c_path.display().to_string();                        
+
+
                         // clean the cache directory, loop files and delete any png files that are not in the current file list
-                        if let Ok(entries) = fs::read_dir(IMAGE_CACHE_DIR) {
+                        if let Ok(entries) = fs::read_dir(&cache_path_str) {
                             for entry in entries {
                                 if let Ok(entry) = entry {
                                     let path = entry.path();
@@ -465,11 +478,14 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
                         // Handle the error, maybe retry or transition to an error state
                         SmState::Connect // Retry connecting
                     } else {
+
+                        let c_path = get_image_cache_dir(&app).unwrap();
+                        let cache_path_str = c_path.display().to_string();                        
                         let mut info = job_result.unwrap();
                         // set the thumbnail name
                         info.file.refs.thumbnail = Some(format!(
                             "{}/{}.png",
-                            IMAGE_CACHE_DIR, info.file.display_name
+                            cache_path_str, info.file.display_name
                         ));
                         println!("Printer Job Info: {:?}", info);
                         app.emit("new-job-info", &info).unwrap();
@@ -527,8 +543,14 @@ pub fn start_background_thread(app: tauri::AppHandle, app_state: Arc<AppState>) 
     });
 }
 
-fn check_for_cache_image(filename: &str) -> Option<String> {
-    let cache_path = format!("{}/{}.png", IMAGE_CACHE_DIR, filename);
+fn check_for_cache_image(app: &tauri::AppHandle, filename: &str) -> Option<String> {
+
+    let c_path = get_image_cache_dir(app).unwrap();
+    let cache_path_str = c_path.display().to_string();    
+    let cache_path = format!("{}\\{}.png", cache_path_str, filename);
+
+    println!("Checking for cached image at: {:?} {:?}", cache_path, std::path::Path::new(&cache_path).exists());
+
     if std::path::Path::new(&cache_path).exists() {
         Some(cache_path)
     } else {
@@ -536,11 +558,30 @@ fn check_for_cache_image(filename: &str) -> Option<String> {
     }
 }
 
-fn check_for_cache_state(filename: &str) -> Option<ThumbnailState> {
-    let cache_path = format!("{}/{}.png", IMAGE_CACHE_DIR, filename);
+fn check_for_cache_state(app: &tauri::AppHandle, filename: &str) -> Option<ThumbnailState> {
+    let c_path = get_image_cache_dir(app).unwrap();
+    let cache_path_str = c_path.display().to_string();
+    let cache_path = format!("{}\\{}.png", cache_path_str, filename);
     if std::path::Path::new(&cache_path).exists() {
         Some(ThumbnailState::Ready)
     } else {
         Some(ThumbnailState::NotStarted) // Return a default state if not found
     }
+}
+
+
+
+
+fn get_image_cache_dir(app: &tauri::AppHandle) -> Result<PathBuf, String> {
+    let app_data_dir = app
+        .path()
+        .app_local_data_dir()
+        .map_err(|e| e.to_string())?;
+
+    let cache_dir = app_data_dir.join("image_cache");
+
+    fs::create_dir_all(&cache_dir)
+        .map_err(|e| e.to_string())?;
+
+    Ok(cache_dir)
 }

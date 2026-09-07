@@ -7,6 +7,7 @@ export interface FileItem {
     m_timestamp: number;
     image?: number[]; // Optional property for the image bytes
     thumbnail_path?: string; // Optional property for the thumbnail path
+    imageSrc?: string; // Optional property for the converted image source
 }
 
 
