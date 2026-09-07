@@ -11,6 +11,7 @@ import { TemperatureReading } from "../types/temperature";
 import TempertureChart from "../components/TemperatureChart"
 import SettingsDialog from "../components/SettingsDialog";
 import "./layout.css";
+import { convertFileSrc } from "@tauri-apps/api/core";
 
 
 
@@ -323,7 +324,7 @@ export default function DashboardLayout({
                   ×
                 </button>
 
-                <img src={selectedFile.thumbnail_path} alt="Thumbnail" style={{ width: "260px", height: "260px" }} />
+                <img src={convertFileSrc(selectedFile.thumbnail_path || "")} alt="Thumbnail" style={{ width: "260px", height: "260px" }} />
                 <p>{selectedFile.display_name}</p>
                 <p>Type: {selectedFile.type}</p>
                 <p>Last Modified: {new Date(selectedFile.m_timestamp * 1000).toLocaleString()}</p>
@@ -347,7 +348,7 @@ export default function DashboardLayout({
           {jobInfo ? (
             <div style={{ display: "grid", gridTemplateColumns: "400px 400px 400px", gridGap: "16px" }} >
               <div style={{ paddingTop: "50px", textAlign: "left", paddingLeft: "16px", gridColumn: "1" }} >
-                <img src={jobInfo?.file?.refs?.thumbnail} alt="Thumbnail" style={{ width: "300px", height: "300px", paddingLeft: "45px" }} />
+                <img src={convertFileSrc(jobInfo?.file?.refs?.thumbnail || "")} alt="Thumbnail" style={{ width: "300px", height: "300px", paddingLeft: "45px" }} />
                 <p style={{ color: "black", fontSize: "16px" , paddingLeft:"45px"}}>{jobInfo?.file?.display_name}</p>
                 <p>{jobInfo?.file?.m_timestamp}</p>
               </div>
